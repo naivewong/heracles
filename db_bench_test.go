@@ -24,16 +24,18 @@ var numNEData int
 var NumSeries = 5050
 var OriginSleep = 20
 var GroupSleep = 50
+var hasBigData bool
 
 func init() {
 	files, err := ioutil.ReadDir("./testdata/bigdata/node_exporter/")
 	if err != nil {
-		fmt.Println("Error list folder ./testdata/bigdata/node_exporter/")
-		os.Exit(1)
+		hasBigData = false
+		return
 	}
+	hasBigData = true
 
 	for _, f := range files {
-		if f.Name()[:4] == "data" {
+		if len(f.Name()) >= 4 && f.Name()[:4] == "data" {
 			temp, _ := strconv.Atoi(f.Name()[4:])
 			if temp > numNEData {
 				numNEData = temp
@@ -1178,6 +1180,9 @@ func GroupDBBenchNodeExporterTimeseries(t testing.TB, timeDelta, devMag int64, t
 }
 
 func TestDB(t *testing.T) {
+	if !hasBigData {
+		t.Skip("skipping test: bigdata not available")
+	}
 	timeDeltas := []int64{5000, 10000, 15000, 30000}
 	for i := 2; i <= 2; i++ {
 		for _, timeDelta := range timeDeltas {
@@ -1189,6 +1194,9 @@ func TestDB(t *testing.T) {
 }
 
 func TestGroupDB(t *testing.T) {
+	if !hasBigData {
+		t.Skip("skipping test: bigdata not available")
+	}
 	timeDeltas := []int64{5000, 10000, 15000, 30000}
 	// timeDeltas := []int64{15000}
 	for i := 1; i <= 4; i++ {
@@ -1201,6 +1209,9 @@ func TestGroupDB(t *testing.T) {
 }
 
 func TestDBComparison(t *testing.T) {
+	if !hasBigData {
+		t.Skip("skipping test: bigdata not available")
+	}
 	timeDeltas := []int64{5000, 10000, 15000, 30000}
 	// timeDeltas := []int64{15000}
 	for i := 1; i <= 1; i++ {

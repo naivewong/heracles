@@ -204,6 +204,7 @@ func NewWriter(fn string) (*Writer, error) {
 		return nil, err
 	}
 	if err := df.Sync(); err != nil {
+		f.Close()
 		return nil, errors.Wrap(err, "sync dir")
 	}
 
@@ -224,6 +225,7 @@ func NewWriter(fn string) (*Writer, error) {
 		crc32:         newCRC32(),
 	}
 	if err := iw.writeMeta(); err != nil {
+		f.Close()
 		return nil, err
 	}
 	return iw, nil

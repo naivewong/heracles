@@ -365,6 +365,10 @@ type GM1Iterator struct {
 // NOTE(Alec): it's user's responsibility to lock before calling (head.go).
 func newGM1Iterator(chunk *GroupMemoryChunk1, timestamp int64, seriesNum int) *GM1Iterator {
 	it := &GM1Iterator{chunk: chunk, t: math.MinInt64, seriesNum: seriesNum}
+	if chunk == nil || len(chunk.group) == 0 {
+		it.err = errors.Errorf("chunk is nil or empty")
+		return it
+	}
 	if seriesNum >= it.chunk.groupNum {
 		it.err = errors.Errorf("seriesNum >= it.chunk.groupNum")
 		return it

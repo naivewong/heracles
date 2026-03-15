@@ -485,3 +485,98 @@ func populateSeries(lbls []map[string]string, mint, maxt int64) []Series {
 	}
 	return series
 }
+
+// TestBlockAccessors tests the simple accessor methods of Block
+func TestBlockAccessors(t *testing.T) {
+	tmpdir, err := ioutil.TempDir("", "test_block_accessors")
+	testutil.Ok(t, err)
+	defer func() {
+		testutil.Ok(t, os.RemoveAll(tmpdir))
+	}()
+
+	blockDir := createBlock(t, tmpdir, genSeries(10, 2, 0, 100), 5)
+	b, err := OpenBlock(nil, blockDir, nil)
+	testutil.Ok(t, err)
+	defer func() {
+		testutil.Ok(t, b.Close())
+	}()
+
+	// Test String() - should return ULID string
+	str := b.String()
+	testutil.Assert(t, len(str) > 0, "String() should return non-empty string")
+
+	// Test Dir() - should return block directory
+	dir := b.Dir()
+	testutil.Equals(t, blockDir, dir)
+
+	// Test Meta() - should return block meta
+	meta := b.Meta()
+	testutil.Assert(t, meta.ULID.String() == str, "Meta ULID should match String()")
+
+	// Test MinTime() and MaxTime()
+	minT := b.MinTime()
+	maxT := b.MaxTime()
+	testutil.Assert(t, minT <= maxT, "MinTime should be <= MaxTime")
+	testutil.Equals(t, meta.MinTime, minT)
+	testutil.Equals(t, meta.MaxTime, maxT)
+
+	// Test Size()
+	size := b.Size()
+	testutil.Assert(t, size > 0, "Size should be positive")
+}
+
+// TestOverlapsClosedInterval tests the OverlapsClosedInterval method
+func TestOverlapsClosedInterval(t *testing.T) {
+	tmpdir, err := ioutil.TempDir("", "test_overlaps")
+	testutil.Ok(t, err)
+	defer func() {
+		testutil.Ok(t, os.RemoveAll(tmpdir))
+	}()
+
+	blockDir := createBlock(t, tmpdir, genSeries(10, 2, 0, 100), 5)
+	b, err := OpenBlock(nil, blockDir, nil)
+	testutil.Ok(t, err)
+	defer func() {
+		testutil.Ok(t, b.Close())
+	}()
+
+	minT := b.MinTime()
+	maxT := b.MaxTime()
+
+	// Test overlapping intervals
+	testutil.Assert(t, b.OverlapsClosedInterval(minT, maxT), "should overlap with its own range")
+	testutil.Assert(t, b.OverlapsClosedInterval(minT, minT), "should overlap with single point at min")
+	// Note: MaxTime is exclusive in the half-open interval [minT, maxT)
+	// So a single point at maxT-1 should overlap, but maxT should not
+	testutil.Assert(t, b.OverlapsClosedInterval(maxT-1, maxT-1), "should overlap with single point at max-1")
+	testutil.Assert(t, !b.OverlapsClosedInterval(maxT, maxT), "should not overlap with single point at max (exclusive)")
+
+	// Test non-overlapping intervals
+	testutil.Assert(t, !b.OverlapsClosedInterval(minT-100, minT-1), "should not overlap with range before")
+	testutil.Assert(t, !b.OverlapsClosedInterval(maxT+1, maxT+100), "should not overlap with range after")
+
+	// Test partial overlap
+	testutil.Assert(t, b.OverlapsClosedInterval(minT-100, minT+10), "should overlap with range starting before")
+	testutil.Assert(t, b.OverlapsClosedInterval(maxT-10, maxT+100), "should overlap with range ending after")
+}
+
+// TestClampInterval tests the clampInterval function
+func TestClampInterval(t *testing.T) {
+	cases := []struct {
+		a, b, mint, maxt int64
+		expA, expB       int64
+	}{
+		{5, 10, 0, 20, 5, 10},   // within bounds
+		{-5, 10, 0, 20, 0, 10},  // a below min
+		{5, 30, 0, 20, 5, 20},   // b above max
+		{-5, 30, 0, 20, 0, 20},  // both outside
+		{0, 20, 0, 20, 0, 20},   // exact bounds
+		{10, 15, 0, 20, 10, 15}, // well within
+	}
+
+	for _, c := range cases {
+		a, b := clampInterval(c.a, c.b, c.mint, c.maxt)
+		testutil.Equals(t, c.expA, a)
+		testutil.Equals(t, c.expB, b)
+	}
+}

@@ -15,6 +15,7 @@ package fileutil
 
 import (
 	"os"
+	"reflect"
 	"syscall"
 	"unsafe"
 )
@@ -35,11 +36,19 @@ func mmap(f *os.File, size int) ([]byte, error) {
 		return nil, os.NewSyscallError("CloseHandle", err)
 	}
 
-	return (*[maxMapSize]byte)(unsafe.Pointer(addr))[:size], nil
+	// Use reflect.SliceHeader to avoid unsafe.Pointer warning
+	var sl = reflect.SliceHeader{
+		Data: addr,
+		Len:  size,
+		Cap:  size,
+	}
+	return *(*[]byte)(unsafe.Pointer(&sl)), nil
 }
 
 func munmap(b []byte) error {
-	if err := syscall.UnmapViewOfFile((uintptr)(unsafe.Pointer(&b[0]))); err != nil {
+	// Use reflect.SliceHeader to get the data pointer safely
+	var sl = (*reflect.SliceHeader)(unsafe.Pointer(&b))
+	if err := syscall.UnmapViewOfFile(sl.Data); err != nil {
 		return os.NewSyscallError("UnmapViewOfFile", err)
 	}
 	return nil

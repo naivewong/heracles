@@ -118,7 +118,7 @@ func (c *XORChunk) Iterator() Iterator {
 }
 
 func (c *XORChunk) IteratorGroup(t int64, num int) Iterator {
-	return NewNopIterator()
+	return c.iterator()
 }
 
 func (c *XORChunk) Chunk() Chunk { return c }
@@ -340,8 +340,24 @@ func (it *xorIterator) Next() bool {
 	return it.readValue()
 }
 
-// NOTE(Alec), only to implement the interface.
-func (it *xorIterator) Seek(x int64) bool { return false; }
+// Seek advances the iterator to the first sample with timestamp >= x.
+// If no such sample exists, it returns false.
+func (it *xorIterator) Seek(x int64) bool {
+	if it.numRead == 0 {
+		// Initialize iterator if not done yet
+		if !it.Next() {
+			return false
+		}
+	}
+	for {
+		if it.t >= x {
+			return true
+		}
+		if !it.Next() {
+			return false
+		}
+	}
+}
 
 func (it *xorIterator) readValue() bool {
 	bit, err := it.br.readBit()

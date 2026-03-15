@@ -350,8 +350,10 @@ func (h *Head) loadWAL(r *wal.Reader, multiRef map[uint64]uint64) (err error) {
 	defer func() {
 		// For any error ensure to terminate all workers before exiting.
 		for i := 0; i < n; i++ {
-			close(inputs[i])
-			for range outputs[i] {
+			if inputs[i] != nil {
+				close(inputs[i])
+				for range outputs[i] {
+				}
 			}
 		}
 		wg.Wait()
@@ -401,8 +403,11 @@ func (h *Head) loadWAL(r *wal.Reader, multiRef map[uint64]uint64) (err error) {
 				for _, s := range rgs.Series {
 					labels = append(labels, s.Labels)
 					ids = append(ids, s.Ref)
-					if h.lastSeriesID < s.Ref {
-						h.lastSeriesID = s.Ref
+					for {
+						old := atomic.LoadUint64(&h.lastSeriesID)
+						if s.Ref <= old || atomic.CompareAndSwapUint64(&h.lastSeriesID, old, s.Ref) {
+							break
+						}
 					}
 				}
 				ms, created := h.getOrCreateWithID(labels, rgs.GroupRef, ids)
@@ -413,9 +418,12 @@ func (h *Head) loadWAL(r *wal.Reader, multiRef map[uint64]uint64) (err error) {
 					multiRef[rgs.GroupRef] = ms.groupRef
 					multiRefLock.Unlock()
 				}
-
-				if h.lastGroupID < rgs.GroupRef {
-					h.lastGroupID = rgs.GroupRef
+			
+				for {
+					old := atomic.LoadUint64(&h.lastGroupID)
+					if rgs.GroupRef <= old || atomic.CompareAndSwapUint64(&h.lastGroupID, old, rgs.GroupRef) {
+						break
+					}
 				}
 			}
 		case RecordGroupSamples:
@@ -496,6 +504,11 @@ func (h *Head) loadWAL(r *wal.Reader, multiRef map[uint64]uint64) (err error) {
 		}
 	}
 	wg.Wait()
+
+	// Mark channels as closed so defer doesn't try to close them again.
+	for i := 0; i < n; i++ {
+		inputs[i] = nil
+	}
 
 	if r.Err() != nil {
 		return errors.Wrap(r.Err(), "read records")

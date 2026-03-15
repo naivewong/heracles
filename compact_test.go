@@ -127,7 +127,7 @@ func TestCompactAll(t *testing.T) {
 	tmpdir, err := ioutil.TempDir("", "test")
 	testutil.Ok(t, err)
 	defer func() {
-		testutil.Ok(t, os.RemoveAll(tmpdir))
+		testutil.Ok(t, testutil.RemoveAll(tmpdir))
 	}()
 	dirs := []string{
 		createBlock(t, tmpdir, genSeriesOrdered(3, 2, 0, 100), 3),
@@ -400,6 +400,7 @@ func TestCompactAll(t *testing.T) {
 		testutil.Equals(t, 6, numSeries)
 
 		bq.Close()
+		testutil.Ok(t, b.Close())
 	}
 }
 

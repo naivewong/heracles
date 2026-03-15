@@ -55,7 +55,7 @@ func generateGroupData(mint, maxt, step, devMag int64, seriesNum int) ([]int64, 
 
 func openTestDB(t testing.TB, opts *Options) (db *DB, close func()) {
 	tmpdir, err := ioutil.TempDir("", "test")
-	testutil.Ok(t, os.RemoveAll(tmpdir))
+	testutil.Ok(t, testutil.RemoveAll(tmpdir))
 	testutil.Ok(t, err)
 
 	logger := log.NewLogfmtLogger(log.NewSyncWriter(os.Stderr))
@@ -64,7 +64,7 @@ func openTestDB(t testing.TB, opts *Options) (db *DB, close func()) {
 
 	// Do not close the test database by default as it will deadlock on test failures.
 	return db, func() {
-		testutil.Ok(t, os.RemoveAll(tmpdir))
+		testutil.Ok(t, testutil.RemoveAll(tmpdir))
 	}
 }
 
@@ -328,6 +328,7 @@ func TestGroupDBAll(t *testing.T) {
 				q.Close()
 			}
 		}
+		db1.Close()
 	}
 }
 

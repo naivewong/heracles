@@ -538,3 +538,144 @@ func TestNewFileReaderErrorNoOpenFiles(t *testing.T) {
 	// dir.Close will fail on Win if idxName fd is not closed on error path.
 	dir.Close()
 }
+
+func TestIndexWriterStageString(t *testing.T) {
+	testutil.Equals(t, "none", idxStageNone.String())
+	testutil.Equals(t, "symbols", idxStageSymbols.String())
+	testutil.Equals(t, "series", idxStageSeries.String())
+	testutil.Equals(t, "label index", idxStageLabelIndex.String())
+	testutil.Equals(t, "postings", idxStagePostings.String())
+	testutil.Equals(t, "group postings", idxStageGroupPostings.String())
+	testutil.Equals(t, "done", idxStageDone.String())
+	testutil.Equals(t, "<unknown>", indexWriterStage(99).String())
+}
+
+func TestIndexWriterSeriesSlice(t *testing.T) {
+	s := indexWriterSeriesSlice{
+		{labels: labels.FromStrings("b", "2")},
+		{labels: labels.FromStrings("a", "1")},
+		{labels: labels.FromStrings("c", "3")},
+	}
+
+	testutil.Equals(t, 3, s.Len())
+	testutil.Assert(t, s.Less(1, 0), "a < b")
+
+	s.Swap(0, 1)
+	testutil.Equals(t, "a", s[0].labels[0].Name)
+}
+
+func TestReaderVersion(t *testing.T) {
+	dir, err := ioutil.TempDir("", "test_version")
+	testutil.Ok(t, err)
+	defer os.RemoveAll(dir)
+
+	fn := filepath.Join(dir, indexFilename)
+
+	iw, err := NewWriter(fn)
+	testutil.Ok(t, err)
+	testutil.Ok(t, iw.Close())
+
+	ir, err := NewFileReader(fn)
+	testutil.Ok(t, err)
+	defer ir.Close()
+
+	testutil.Equals(t, FormatGroup, ir.Version())
+}
+
+func TestSymbolTableSize(t *testing.T) {
+	dir, err := ioutil.TempDir("", "test_symbol_size")
+	testutil.Ok(t, err)
+	defer os.RemoveAll(dir)
+
+	fn := filepath.Join(dir, indexFilename)
+
+	iw, err := NewWriter(fn)
+	testutil.Ok(t, err)
+	testutil.Ok(t, iw.AddSymbols(map[string]struct{}{
+		"a": {}, "b": {}, "1": {}, "2": {},
+	}))
+	testutil.Ok(t, iw.Close())
+
+	ir, err := NewFileReader(fn)
+	testutil.Ok(t, err)
+	defer ir.Close()
+
+	size := ir.SymbolTableSize()
+	testutil.Assert(t, size > 0, "symbol table size should be greater than 0")
+}
+
+func TestByteSliceSub(t *testing.T) {
+	b := realByteSlice([]byte{0x01, 0x02, 0x03, 0x04, 0x05})
+	sub := b.Sub(1, 4)
+	testutil.Equals(t, 3, sub.Len())
+	testutil.Equals(t, []byte{0x02, 0x03, 0x04}, sub.Range(0, 3))
+}
+
+func TestStringTuples(t *testing.T) {
+	st, err := NewStringTuples([]string{"a", "b", "c"}, 3)
+	testutil.Ok(t, err)
+	testutil.Equals(t, 1, st.Len())
+
+	vals, err := st.At(0)
+	testutil.Ok(t, err)
+	testutil.Equals(t, []string{"a", "b", "c"}, vals)
+
+	st.Swap(0, 0) // No-op swap
+}
+
+func TestStringTuplesInvalid(t *testing.T) {
+	_, err := NewStringTuples([]string{"a", "b"}, 3)
+	testutil.NotOk(t, err)
+}
+
+func TestReaderSize(t *testing.T) {
+	dir, err := ioutil.TempDir("", "test_reader_size")
+	testutil.Ok(t, err)
+	defer os.RemoveAll(dir)
+
+	fn := filepath.Join(dir, indexFilename)
+
+	iw, err := NewWriter(fn)
+	testutil.Ok(t, err)
+	testutil.Ok(t, iw.AddSymbols(map[string]struct{}{"a": {}}))
+	testutil.Ok(t, iw.Close())
+
+	ir, err := NewFileReader(fn)
+	testutil.Ok(t, err)
+	defer ir.Close()
+
+	size := ir.Size()
+	testutil.Assert(t, size > 0, "size should be greater than 0")
+}
+
+// TestUint32Slice tests the uint32slice type and its methods
+func TestUint32Slice(t *testing.T) {
+	// Test with unsorted slice to trigger Swap
+	s := uint32slice{3, 1, 4, 1, 5, 9, 2, 6}
+	testutil.Equals(t, 8, s.Len())
+	testutil.Assert(t, !s.Less(0, 1), "3 should not be less than 1")
+	testutil.Assert(t, s.Less(1, 0), "1 should be less than 3")
+
+	// Swap elements
+	s.Swap(0, 1)
+	testutil.Equals(t, uint32(1), s[0])
+	testutil.Equals(t, uint32(3), s[1])
+
+	// Sort the slice to ensure Swap is called
+	sort.Sort(s)
+	testutil.Equals(t, []uint32{1, 1, 2, 3, 4, 5, 6, 9}, []uint32(s))
+}
+
+// TestUint32SliceSorted tests sorting an already sorted slice
+func TestUint32SliceSorted(t *testing.T) {
+	s := uint32slice{1, 2, 3, 4, 5}
+	sort.Sort(s)
+	testutil.Equals(t, []uint32{1, 2, 3, 4, 5}, []uint32(s))
+}
+
+// TestUint32SliceReverse tests sorting a reverse-sorted slice
+func TestUint32SliceReverse(t *testing.T) {
+	s := uint32slice{5, 4, 3, 2, 1}
+	sort.Sort(s)
+	testutil.Equals(t, []uint32{1, 2, 3, 4, 5}, []uint32(s))
+}

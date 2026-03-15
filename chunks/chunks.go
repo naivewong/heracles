@@ -295,6 +295,9 @@ func MergeChunks(a, b chunkenc.Chunk) (*chunkenc.XORChunk, error) {
 // │                               CRC32 <4 bytes>                                     │
 // └───────────────────────────────────────────────────────────────────────────────────┘
 func (w *Writer) WriteChunks(chks ...chunkenc.Meta) error {
+	if len(chks) == 0 {
+		return nil
+	}
 	switch chks[0].Chunk.Encoding() {
 	case chunkenc.EncGDC1:
 		maxLen := int64(binary.MaxVarintLen32)      // The number of chunks.

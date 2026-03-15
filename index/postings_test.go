@@ -20,6 +20,7 @@ import (
 	"sort"
 	"testing"
 
+	"github.com/naivewong/tsdb-group/labels"
 	"github.com/naivewong/tsdb-group/testutil"
 )
 
@@ -811,4 +812,97 @@ func TestWithoutPostings(t *testing.T) {
 			testutil.Equals(t, expected, res)
 		})
 	}
+}
+
+func TestAllPostingsKey(t *testing.T) {
+	name, value := AllPostingsKey()
+	testutil.Equals(t, "", name)
+	testutil.Equals(t, "", value)
+}
+
+func TestMemPostingsAll(t *testing.T) {
+	p := NewMemPostings()
+	p.Add(1, labels.Labels{{Name: "a", Value: "1"}})
+	p.Add(2, labels.Labels{{Name: "a", Value: "1"}})
+	p.Add(3, labels.Labels{{Name: "b", Value: "2"}})
+
+	it := p.All()
+	var refs []uint64
+	for it.Next() {
+		refs = append(refs, it.At())
+	}
+	testutil.Ok(t, it.Err())
+	testutil.Equals(t, []uint64{1, 2, 3}, refs)
+}
+
+func TestMemPostingsDelete(t *testing.T) {
+	p := NewMemPostings()
+	p.Add(1, labels.Labels{{Name: "a", Value: "1"}})
+	p.Add(2, labels.Labels{{Name: "a", Value: "1"}})
+	p.Add(3, labels.Labels{{Name: "a", Value: "1"}})
+
+	p.Delete(map[uint64]struct{}{2: {}})
+
+	refs, err := ExpandPostings(p.Get("a", "1"))
+	testutil.Ok(t, err)
+	testutil.Equals(t, []uint64{1, 3}, refs)
+}
+
+func TestListPostingsSeek(t *testing.T) {
+	p := newListPostings(1, 3, 5, 7, 9)
+
+	testutil.Assert(t, p.Seek(3), "should find 3")
+	testutil.Equals(t, uint64(3), p.At())
+
+	testutil.Assert(t, p.Seek(6), "should find 7")
+	testutil.Equals(t, uint64(7), p.At())
+
+	testutil.Assert(t, !p.Seek(10), "should not find anything past 9")
+}
+
+func TestBigEndianPostings(t *testing.T) {
+	// Create a byte slice with big endian postings
+	data := make([]byte, 16)
+	binary.BigEndian.PutUint32(data[0:4], 10)
+	binary.BigEndian.PutUint32(data[4:8], 20)
+	binary.BigEndian.PutUint32(data[8:12], 30)
+	binary.BigEndian.PutUint32(data[12:16], 40)
+
+	p := newBigEndianPostings(data)
+
+	var refs []uint64
+	for p.Next() {
+		refs = append(refs, p.At())
+	}
+	testutil.Ok(t, p.Err())
+	testutil.Equals(t, []uint64{10, 20, 30, 40}, refs)
+}
+
+func TestIncrementPostings(t *testing.T) {
+	p := NewIncrementPostings(1, 6) // end is exclusive
+
+	var refs []uint64
+	for p.Next() {
+		refs = append(refs, p.At())
+	}
+	testutil.Ok(t, p.Err())
+	testutil.Equals(t, []uint64{1, 2, 3, 4, 5}, refs)
+
+	// Test Seek
+	p = NewIncrementPostings(1, 6)
+	testutil.Assert(t, p.Seek(3), "should find 3")
+	testutil.Equals(t, uint64(3), p.At())
+}
+
+func TestEmptyPostings(t *testing.T) {
+	p := EmptyPostings()
+	testutil.Assert(t, !p.Next(), "empty postings should have no next")
+	testutil.Assert(t, !p.Seek(1), "empty postings should not seek")
+	testutil.Ok(t, p.Err())
+}
+
+func TestErrPostings(t *testing.T) {
+	p := ErrPostings(fmt.Errorf("test error"))
+	testutil.Assert(t, !p.Next(), "err postings should have no next")
+	testutil.NotOk(t, p.Err())
 }

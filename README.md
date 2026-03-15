@@ -319,6 +319,7 @@ go test -mod=vendor -run ^$ -bench ^BenchmarkGroupDBtsbs$ . -timeout 99999s -ben
 | `test/` | `conv_test.go` | 类型转换测试 | |
 | `test/` | `hash_test.go` | 哈希测试 | |
 | `test/` | `labels_test.go` | 标签测试 | |
+| `testutil/` | `testutil_test.go` | 测试工具测试：Assert/Ok/Equals 系列断言、formatMessage、RemoveAll | |
 | `tsdbutil/` | `buffer_test.go` | 缓冲区测试 | |
 | `tsdbutil/` | `chunks_test.go` | Chunk 工具测试：样本生成、 populated chunk | |
 | `wal/` | `reader_test.go` | WAL 读取器测试 | |

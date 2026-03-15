@@ -79,9 +79,12 @@ func repairBadIndexVersion(logger log.Logger, dir string) error {
 
 		broken, err := os.Open(filepath.Join(d, indexFilename))
 		if err != nil {
+			repl.Close()
 			return wrapErr(err, d)
 		}
 		if _, err := io.Copy(repl, broken); err != nil {
+			repl.Close()
+			broken.Close()
 			return wrapErr(err, d)
 		}
 

@@ -1043,7 +1043,9 @@ func (db *DB) CleanTombstones() (err error) {
 	defer db.cmtx.Unlock()
 
 	start := time.Now()
-	defer db.metrics.tombCleanTimer.Observe(time.Since(start).Seconds())
+	defer func() {
+		db.metrics.tombCleanTimer.Observe(time.Since(start).Seconds())
+	}()
 
 	newUIDs := []ulid.ULID{}
 	defer func() {

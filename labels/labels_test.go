@@ -211,3 +211,115 @@ func TestByGroup(t *testing.T) {
 	sort.Sort(g)
 	t.Log(lsets)
 }
+
+func TestLabelsHash(t *testing.T) {
+	ls := Labels{{"a", "1"}, {"b", "2"}}
+	hash := ls.Hash()
+	testutil.Assert(t, hash != 0, "hash should not be zero")
+
+	// Same labels should produce same hash
+	ls2 := Labels{{"a", "1"}, {"b", "2"}}
+	testutil.Equals(t, hash, ls2.Hash())
+
+	// Different labels should produce different hash
+	ls3 := Labels{{"a", "1"}, {"b", "3"}}
+	testutil.Assert(t, hash != ls3.Hash(), "different labels should have different hash")
+}
+
+func TestLabelsMap(t *testing.T) {
+	ls := Labels{{"a", "1"}, {"b", "2"}}
+	m := ls.Map()
+
+	testutil.Equals(t, 2, len(m))
+	testutil.Equals(t, "1", m["a"])
+	testutil.Equals(t, "2", m["b"])
+}
+
+func TestLabelsWithoutEmpty(t *testing.T) {
+	// No empty labels
+	ls := Labels{{"a", "1"}, {"b", "2"}}
+	result := ls.WithoutEmpty()
+	testutil.Equals(t, 2, len(result))
+
+	// With empty label
+	ls2 := Labels{{"a", "1"}, {"b", ""}}
+	result2 := ls2.WithoutEmpty()
+	testutil.Equals(t, 1, len(result2))
+	testutil.Equals(t, "1", result2[0].Value)
+}
+
+func TestFromMap(t *testing.T) {
+	m := map[string]string{
+		"a": "1",
+		"b": "2",
+		"c": "", // Empty value should be excluded
+	}
+	ls := FromMap(m)
+
+	testutil.Equals(t, 2, len(ls))
+}
+
+func TestFromStrings(t *testing.T) {
+	ls := FromStrings("a", "1", "b", "2")
+	testutil.Equals(t, 2, len(ls))
+
+	// Empty value should be excluded
+	ls2 := FromStrings("a", "1", "b", "")
+	testutil.Equals(t, 1, len(ls2))
+}
+
+func TestFromStringsPanic(t *testing.T) {
+	defer func() {
+		if r := recover(); r == nil {
+			t.Error("expected panic for odd number of strings")
+		}
+	}()
+	FromStrings("a") // Should panic
+}
+
+func TestSliceMethods(t *testing.T) {
+	s := Slice{
+		{{"b", "2"}},
+		{{"a", "1"}},
+	}
+
+	testutil.Equals(t, 2, s.Len())
+	testutil.Assert(t, s.Less(1, 0), "a should be less than b")
+
+	s.Swap(0, 1)
+	testutil.Equals(t, "a", s[0][0].Name)
+}
+
+func TestMatcherValue(t *testing.T) {
+	// Test EqualMatcher.Value()
+	em := &EqualMatcher{name: "name", value: "value"}
+	testutil.Equals(t, "value", em.Value())
+
+	// Test RegexpMatcher.Value()
+	rm, err := NewRegexpMatcher("name", "v.*")
+	testutil.Ok(t, err)
+	// Type assertion to access Value()
+	if rm, ok := rm.(*RegexpMatcher); ok {
+		testutil.Equals(t, "v.*", rm.Value())
+	} else {
+		t.Error("expected *RegexpMatcher")
+	}
+}
+
+func TestByGroupAt(t *testing.T) {
+	lsets := []Labels{
+		{{"a", "1"}},
+		{{"b", "2"}},
+		{{"c", "3"}},
+		{{"d", "4"}},
+	}
+	g := &ByGroup{Lsets: &lsets, GSize: 2}
+
+	group, err := g.At(0)
+	testutil.Ok(t, err)
+	testutil.Equals(t, 2, len(group))
+
+	group2, err := g.At(2)
+	testutil.Ok(t, err)
+	testutil.Equals(t, 2, len(group2))
+}

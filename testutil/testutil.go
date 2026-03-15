@@ -24,10 +24,12 @@ package testutil
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"reflect"
 	"runtime"
 	"testing"
+	"time"
 )
 
 // Assert fails the test if the condition is false.
@@ -129,4 +131,19 @@ func NotEquals2(exp, act interface{}) {
 		fmt.Printf("\033[31m%s:%d: Expected different exp and got\n\n\texp: %#v\n\n\tgot: %#v\033[39m\n\n", filepath.Base(file), line, exp, act)
 		panic("")
 	}
+}
+
+// RemoveAll removes a directory tree with retries for Windows file locking issues.
+// On Windows, files may still be locked briefly after closing, so we retry a few times.
+func RemoveAll(path string) error {
+	var err error
+	for i := 0; i < 20; i++ {
+		err = os.RemoveAll(path)
+		if err == nil {
+			return nil
+		}
+		// Try again after a short delay
+		time.Sleep(200 * time.Millisecond)
+	}
+	return err
 }

@@ -26,6 +26,12 @@ import (
 )
 
 func TestRepairBadIndexVersion(t *testing.T) {
+	// Check if test data exists
+	dbDir := filepath.Join("testdata", "repair_index_version", "01BZJ9WJQPWHGNC2W4J9TA62KC")
+	indexPath := filepath.Join(dbDir, indexFilename)
+	if _, err := os.Stat(indexPath); os.IsNotExist(err) {
+		t.Skip("skipping test: repair test data not available")
+	}
 	// The broken index used in this test was written by the following script
 	// at a broken revision.
 	//
@@ -59,7 +65,6 @@ func TestRepairBadIndexVersion(t *testing.T) {
 	// 		panic(err)
 	// 	}
 	// }
-	dbDir := filepath.Join("testdata", "repair_index_version", "01BZJ9WJQPWHGNC2W4J9TA62KC")
 	tmpDir := filepath.Join("testdata", "repair_index_version", "copy")
 	tmpDbDir := filepath.Join(tmpDir, "3MCNSQ8S31EHGJYWK5E1GPJWJZ")
 

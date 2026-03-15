@@ -411,3 +411,41 @@ func TestReadDirs(t *testing.T) {
 	// Should contain relative paths
 	testutil.Equals(t, 4, len(files))
 }
+
+func TestOpenMmapFile(t *testing.T) {
+	dir, err := ioutil.TempDir("", "test_mmap")
+	testutil.Ok(t, err)
+	defer os.RemoveAll(dir)
+
+	// Create a test file
+	filePath := filepath.Join(dir, "test.txt")
+	testData := []byte("hello world")
+	testutil.Ok(t, ioutil.WriteFile(filePath, testData, 0644))
+
+	// Open and mmap the file
+	mf, err := OpenMmapFile(filePath)
+	testutil.Ok(t, err)
+	defer mf.Close()
+
+	// Verify content
+	testutil.Equals(t, len(testData), len(mf.Bytes()))
+	testutil.Equals(t, string(testData), string(mf.Bytes()))
+
+	// Verify File() returns the underlying file
+	testutil.Assert(t, mf.File() != nil, "File() should return non-nil")
+}
+
+func TestOpenMmapFileNonExistent(t *testing.T) {
+	_, err := OpenMmapFile(filepath.Join(os.TempDir(), "nonexistent_12345.txt"))
+	testutil.NotOk(t, err)
+}
+
+func TestOpenMmapFileDirectory(t *testing.T) {
+	dir, err := ioutil.TempDir("", "test_mmap_dir")
+	testutil.Ok(t, err)
+	defer os.RemoveAll(dir)
+
+	// Attempting to mmap a directory should fail
+	_, err = OpenMmapFile(dir)
+	testutil.NotOk(t, err)
+}

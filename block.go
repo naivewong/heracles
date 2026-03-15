@@ -255,7 +255,7 @@ func writeMetaFile(logger log.Logger, dir string, meta *BlockMeta) (int64, error
 
 	jsonMeta, err := json.MarshalIndent(meta, "", "\t")
 	if err != nil {
-		return 0, err
+		return 0, tsdb_errors.MultiError{err, f.Close()}.Err()
 	}
 
 	var merr tsdb_errors.MultiError

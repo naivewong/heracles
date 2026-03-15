@@ -31,11 +31,13 @@ func OpenMmapFile(path string) (*MmapFile, error) {
 	}
 	info, err := f.Stat()
 	if err != nil {
+		f.Close()
 		return nil, errors.Wrap(err, "stat")
 	}
 
 	b, err := mmap(f, int(info.Size()))
 	if err != nil {
+		f.Close()
 		return nil, errors.Wrap(err, "mmap")
 	}
 

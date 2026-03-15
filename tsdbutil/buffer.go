@@ -201,7 +201,7 @@ func (r *sampleRing) add(t int64, v float64) {
 	r.l++
 
 	// Free head of the buffer of samples that just fell out of the range.
-	for r.buf[r.f].t < t-r.delta {
+	for r.l > 0 && r.buf[r.f].t < t-r.delta {
 		r.f++
 		if r.f >= l {
 			r.f -= l

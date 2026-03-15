@@ -346,7 +346,6 @@ func (b *bstream) ReadUvarintAt(pos int) (uint64, int, error) {
 		s += 7
 		count += 1
 	}
-	return 0, 0, nil // Will never reach.
 }
 
 func (b *bstream) ReadVarintAt(pos int) (int64, int, error) {

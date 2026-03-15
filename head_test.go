@@ -18,9 +18,9 @@ import (
 	"io/ioutil"
 	"math"
 	"math/rand"
-	"os"
-// 	"path"
-// 	"path/filepath"
+	// "os"
+//  	"path"
+//  	"path/filepath"
 	// "reflect"
 	"sort"
 	"testing"
@@ -610,7 +610,7 @@ func TestHeadWithWAL(test *testing.T) {
 	tmpdir, err := ioutil.TempDir("", "head_with_wal")
 	testutil.Ok(test, err)
 	defer func() {
-		testutil.Ok(test, os.RemoveAll(tmpdir))
+		testutil.Ok(test, testutil.RemoveAll(tmpdir))
 	}()
 
 	numPoints := 1000
@@ -823,6 +823,9 @@ func TestHeadWithWAL(test *testing.T) {
 			testutil.Equals(test, numPoints, i)
 		}
 	}
+
+	ir.Close()
+	testutil.Ok(test, h.Close())
 }
 
 // func TestHeadDeleteSeriesWithoutSamples(t *testing.T) {

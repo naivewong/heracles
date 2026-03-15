@@ -566,6 +566,7 @@ func (w *SegmentWAL) createSegmentFile(name string) (*os.File, error) {
 		return nil, err
 	}
 	if err = fileutil.Preallocate(f, w.segmentSize, true); err != nil {
+		f.Close()
 		return nil, err
 	}
 	// Write header metadata for new file.
@@ -574,6 +575,7 @@ func (w *SegmentWAL) createSegmentFile(name string) (*os.File, error) {
 	metab[4] = WALFormatDefault
 
 	if _, err := f.Write(metab); err != nil {
+		f.Close()
 		return nil, err
 	}
 	return f, err
