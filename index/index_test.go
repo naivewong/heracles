@@ -135,7 +135,7 @@ func (m mockIndex) Postings(name, value string) (Postings, error) {
 
 func (m mockIndex) GroupPostings(ref uint64) (Postings, error) {
 	if ref == AllGroupPostings {
-		return newIncrementPostings(0, len(m.group)), nil
+		return NewIncrementPostings(0, len(m.group)), nil
 	}
 	if int(ref) >= len(m.group) {
 		return nil, errors.Errorf("Fail to read group postings, group index:%d not existed", ref)

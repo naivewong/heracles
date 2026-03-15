@@ -196,7 +196,7 @@ type seriesSamples struct {
 // ChunkReader: ref -> vals
 func createIdxChkReaders(t *testing.T, tc []seriesSamples) (IndexReader, ChunkReader, int64, int64) {
 	sort.Slice(tc, func(i, j int) bool {
-		return labels.Compare(labels.FromMap(tc[i].lset), labels.FromMap(tc[i].lset)) < 0
+		return labels.Compare(labels.FromMap(tc[i].lset), labels.FromMap(tc[j].lset)) < 0
 	})
 
 	postings := index.NewMemPostings()
@@ -1233,7 +1233,7 @@ func (cr mockChunkReader) Chunk(id uint64) (chunkenc.Chunk, error) {
 		return chk, nil
 	}
 
-	return nil, errors.New("Chunk with ref not found")
+	return nil, errors.Wrapf(ErrNotFound, "chunk ref %d not found", id)
 }
 
 func (cr mockChunkReader) Close() error {

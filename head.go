@@ -348,15 +348,13 @@ func (h *Head) loadWAL(r *wal.Reader, multiRef map[uint64]uint64) (err error) {
 	wg.Add(n)
 
 	defer func() {
-		// For CorruptionErr ensure to terminate all workers before exiting.
-		if _, ok := err.(*wal.CorruptionErr); ok {
-			for i := 0; i < n; i++ {
-				close(inputs[i])
-				for range outputs[i] {
-				}
+		// For any error ensure to terminate all workers before exiting.
+		for i := 0; i < n; i++ {
+			close(inputs[i])
+			for range outputs[i] {
 			}
-			wg.Wait()
 		}
+		wg.Wait()
 	}()
 
 	for i := 0; i < n; i++ {
@@ -1069,6 +1067,10 @@ func (h *Head) chunkRewrite(ref uint64, dranges Intervals, group bool) (err erro
 	}
 	ms.Lock()
 	defer ms.Unlock()
+
+	if len(ms.labels) == 0 {
+		return nil
+	}
 
 	iterators := make([]*chunkSeriesIterator, 0, len(ms.labels))
 	for i := 0; i < len(ms.labels); i++ {
@@ -1800,7 +1802,7 @@ func (s *stripeSeries) getSortedGroup() []uint64 {
 	s.gLock.RUnlock()
 
 	sort.Slice(grps, func(i, j int) bool {
-		return labels.Compare(grps[i].labels[0], grps[i].labels[0]) < 0
+		return labels.Compare(grps[i].labels[0], grps[j].labels[0]) < 0
 	})
 
 	rg := make([]uint64, 0, len(grps))

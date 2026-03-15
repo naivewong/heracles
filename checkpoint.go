@@ -149,16 +149,18 @@ func Checkpoint(w *wal.WAL, from, to int, keep func(id uint64) bool, mint int64)
 	r := wal.NewReader(sgmReader)
 
 	var (
-		series  []RefGroupSeries
-		samples []RefGroupSample
-		tstones []Stone
-		dec     RecordDecoder
-		enc     RecordEncoder
-		buf     []byte
-		recs    [][]byte
+		series      []RefGroupSeries
+		plainSeries []RefSeries
+		samples     []RefGroupSample
+		plainSamples []RefSample
+		tstones     []Stone
+		dec         RecordDecoder
+		enc         RecordEncoder
+		buf         []byte
+		recs        [][]byte
 	)
 	for r.Next() {
-		series, samples, tstones = series[:0], samples[:0], tstones[:0]
+		series, plainSeries, samples, plainSamples, tstones = series[:0], plainSeries[:0], samples[:0], plainSamples[:0], tstones[:0]
 
 		// We don't reset the buffer since we batch up multiple records
 		// before writing them to the checkpoint.
@@ -185,6 +187,24 @@ func Checkpoint(w *wal.WAL, from, to int, keep func(id uint64) bool, mint int64)
 			stats.TotalSeries += len(series)
 			stats.DroppedSeries += len(series) - len(repl)
 
+		case RecordSeries:
+			plainSeries, err = dec.Series(rec, plainSeries)
+			if err != nil {
+				return nil, errors.Wrap(err, "decode series")
+			}
+			// Drop irrelevant series in place.
+			repl := plainSeries[:0]
+			for _, s := range plainSeries {
+				if keep(s.Ref) {
+					repl = append(repl, s)
+				}
+			}
+			if len(repl) > 0 {
+				buf = enc.Series(repl, buf)
+			}
+			stats.TotalSeries += len(plainSeries)
+			stats.DroppedSeries += len(plainSeries) - len(repl)
+
 		case RecordGroupSamples:
 			samples, err = dec.GroupSamples(rec, samples)
 			if err != nil {
@@ -203,6 +223,24 @@ func Checkpoint(w *wal.WAL, from, to int, keep func(id uint64) bool, mint int64)
 			stats.TotalSamples += len(samples)
 			stats.DroppedSamples += len(samples) - len(repl)
 
+		case RecordSamples:
+			plainSamples, err = dec.Samples(rec, plainSamples)
+			if err != nil {
+				return nil, errors.Wrap(err, "decode samples")
+			}
+			// Drop irrelevant samples in place.
+			repl := plainSamples[:0]
+			for _, s := range plainSamples {
+				if s.T >= mint {
+					repl = append(repl, s)
+				}
+			}
+			if len(repl) > 0 {
+				buf = enc.Samples(repl, buf)
+			}
+			stats.TotalSamples += len(plainSamples)
+			stats.DroppedSamples += len(plainSamples) - len(repl)
+
 		case RecordGroupTombstones:
 			tstones, err = dec.GroupTombstones(rec, tstones)
 			if err != nil {
@@ -220,6 +258,27 @@ func Checkpoint(w *wal.WAL, from, to int, keep func(id uint64) bool, mint int64)
 			}
 			if len(repl) > 0 {
 				buf = enc.GroupTombstones(repl, buf)
+			}
+			stats.TotalTombstones += len(tstones)
+			stats.DroppedTombstones += len(tstones) - len(repl)
+
+		case RecordTombstones:
+			tstones, err = dec.Tombstones(rec, tstones)
+			if err != nil {
+				return nil, errors.Wrap(err, "decode deletes")
+			}
+			// Drop irrelevant tombstones in place.
+			repl := tstones[:0]
+			for _, s := range tstones {
+				for _, iv := range s.intervals {
+					if iv.Maxt >= mint {
+						repl = append(repl, s)
+						break
+					}
+				}
+			}
+			if len(repl) > 0 {
+				buf = enc.Tombstones(repl, buf)
 			}
 			stats.TotalTombstones += len(tstones)
 			stats.DroppedTombstones += len(tstones) - len(repl)

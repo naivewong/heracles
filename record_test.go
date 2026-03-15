@@ -171,3 +171,90 @@ func TestRecord_Corruputed(t *testing.T) {
 		testutil.Equals(t, err, encoding.ErrInvalidSize)
 	})
 }
+
+func TestRecord_Type(t *testing.T) {
+	var dec RecordDecoder
+
+	testutil.Equals(t, RecordInvalid, dec.Type(nil))
+	testutil.Equals(t, RecordInvalid, dec.Type([]byte{}))
+	testutil.Equals(t, RecordSeries, dec.Type([]byte{byte(RecordSeries)}))
+	testutil.Equals(t, RecordSamples, dec.Type([]byte{byte(RecordSamples)}))
+	testutil.Equals(t, RecordTombstones, dec.Type([]byte{byte(RecordTombstones)}))
+	testutil.Equals(t, RecordGroupSeries, dec.Type([]byte{byte(RecordGroupSeries)}))
+	testutil.Equals(t, RecordGroupSamples, dec.Type([]byte{byte(RecordGroupSamples)}))
+	testutil.Equals(t, RecordGroupTombstones, dec.Type([]byte{byte(RecordGroupTombstones)}))
+	testutil.Equals(t, RecordInvalid, dec.Type([]byte{255}))
+}
+
+func TestRecord_GroupSamplesEdgeCases(t *testing.T) {
+	var enc RecordEncoder
+	var dec RecordDecoder
+
+	t.Run("empty samples", func(t *testing.T) {
+		result := enc.GroupSamples(nil, nil)
+		testutil.Equals(t, []byte(nil), result)
+	})
+
+	t.Run("single group single sample", func(t *testing.T) {
+		samples := []RefGroupSample{
+			{GroupRef: 1, T: 100, Ids: []uint64{10}, Vals: []float64{1.5}},
+		}
+		encoded := enc.GroupSamples(samples, nil)
+		decoded, err := dec.GroupSamples(encoded, nil)
+		testutil.Ok(t, err)
+		testutil.Equals(t, samples, decoded)
+	})
+
+	t.Run("invalid record type", func(t *testing.T) {
+		_, err := dec.GroupSamples([]byte{byte(RecordSeries)}, nil)
+		testutil.NotOk(t, err)
+	})
+}
+
+func TestRecord_GroupSeriesEdgeCases(t *testing.T) {
+	var enc RecordEncoder
+	var dec RecordDecoder
+
+	t.Run("empty series", func(t *testing.T) {
+		result := enc.GroupSeries(nil, nil)
+		testutil.Equals(t, []byte{byte(RecordGroupSeries)}, result)
+	})
+
+	t.Run("invalid record type", func(t *testing.T) {
+		_, err := dec.GroupSeries([]byte{byte(RecordSamples)}, nil)
+		testutil.NotOk(t, err)
+	})
+}
+
+func TestRecord_GroupTombstones(t *testing.T) {
+	var enc RecordEncoder
+	var dec RecordDecoder
+
+	tstones := []Stone{
+		{ref: 100, intervals: Intervals{{Mint: 0, Maxt: 100}}},
+		{ref: 200, intervals: Intervals{{Mint: 50, Maxt: 150}}},
+	}
+
+	encoded := enc.GroupTombstones(tstones, nil)
+	decoded, err := dec.GroupTombstones(encoded, nil)
+	testutil.Ok(t, err)
+	testutil.Equals(t, tstones, decoded)
+
+	t.Run("invalid record type", func(t *testing.T) {
+		_, err := dec.GroupTombstones([]byte{byte(RecordSeries)}, nil)
+		testutil.NotOk(t, err)
+	})
+}
+
+func TestRecord_EmptySamples(t *testing.T) {
+	var enc RecordEncoder
+	var dec RecordDecoder
+
+	// Test empty samples
+	encoded := enc.Samples(nil, nil)
+	testutil.Equals(t, []byte{byte(RecordSamples)}, encoded)
+
+	decoded, err := dec.Samples(encoded, nil)
+	testutil.Ok(t, err)
+	testutil.Equals(t, []RefSample(nil), decoded)
+}

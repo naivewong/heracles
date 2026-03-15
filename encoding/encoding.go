@@ -245,6 +245,9 @@ type ByteSlice interface {
 }
 
 func MaxBits(arr []int64) int {
+	if len(arr) == 0 {
+		return 0
+	}
 	max := arr[0]
 	min := arr[0]
 	for i := 1; i < len(arr); i++ {
@@ -256,18 +259,21 @@ func MaxBits(arr []int64) int {
 		}
 	}
 	if min < 0 {
-		minBits := bits.Len(uint(^min)) + 1
+		// For negative numbers, compute bits needed for |min| + sign bit
+		// -1 needs 2 bits: bits.Len(1) + 1 = 2
+		// -2 needs 3 bits: bits.Len(2) + 1 = 3
+		minBits := bits.Len64(uint64(-min)) + 1
 		if max < 0 {
 			return minBits
 		}
-		maxBits := bits.Len(uint(max)) + 1
+		maxBits := bits.Len64(uint64(max)) + 1
 		if minBits > maxBits {
 			return minBits
 		} else {
 			return maxBits
 		}
 	}
-	return bits.Len(uint(max)) + 1
+	return bits.Len64(uint64(max)) + 1
 }
 // // The slower version.
 // func MaxBits(arr []int64) int {

@@ -405,6 +405,10 @@ func (e *RecordEncoder) GroupSamples(samples []RefGroupSample, b []byte) []byte 
 	buf.PutByte(byte(RecordGroupSamples))
 
 	for _, rgs := range samples {
+		if len(rgs.Ids) == 0 || len(rgs.Vals) == 0 {
+			continue
+		}
+
 		buf.PutBE64(rgs.GroupRef)
 		buf.PutUvarint(len(rgs.Vals))
 		buf.PutBE64int64(rgs.T)
