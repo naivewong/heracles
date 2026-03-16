@@ -18,7 +18,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"math"
 	"os"
 	"path/filepath"
@@ -1075,7 +1074,7 @@ func (db *DB) CleanTombstones() (err error) {
 	return errors.Wrap(db.reload(), "reload blocks")
 }
 
-func isBlockDir(fi os.FileInfo) bool {
+func isBlockDir(fi os.DirEntry) bool {
 	if !fi.IsDir() {
 		return false
 	}
@@ -1084,7 +1083,7 @@ func isBlockDir(fi os.FileInfo) bool {
 }
 
 func blockDirs(dir string) ([]string, error) {
-	files, err := ioutil.ReadDir(dir)
+	files, err := os.ReadDir(dir)
 	if err != nil {
 		return nil, err
 	}
@@ -1099,7 +1098,7 @@ func blockDirs(dir string) ([]string, error) {
 }
 
 func sequenceFiles(dir string) ([]string, error) {
-	files, err := ioutil.ReadDir(dir)
+	files, err := os.ReadDir(dir)
 	if err != nil {
 		return nil, err
 	}

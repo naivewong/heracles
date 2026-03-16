@@ -463,6 +463,7 @@ func (c *LeveledCompactor) Compact(dest string, dirs []string, open []*Block) (u
 	return uid, merr
 }
 
+// Write creates a new block from the provided BlockReader and writes it to the destination.
 func (c *LeveledCompactor) Write(dest string, b BlockReader, mint, maxt int64, parent *BlockMeta) (ulid.ULID, error) {
 	start := time.Now()
 
@@ -512,6 +513,7 @@ type instrumentedChunkWriter struct {
 	trange  prometheus.Histogram
 }
 
+// WriteChunks writes chunks and records statistics about them.
 func (w *instrumentedChunkWriter) WriteChunks(chunks ...chunkenc.Meta) error {
 	for _, c := range chunks {
 		w.size.Observe(float64(len(c.Chunk.Bytes())))
@@ -762,7 +764,7 @@ func (c *LeveledCompactor) populateBlock(blocks []BlockReader, meta *BlockMeta, 
 			// If blocks are overlapping, it is possible to have unsorted chunks.
 			// TODO(Alec), more efficient.
 			for i := 0; i < len(chks); i++ {
-				sort.Slice(chks[i], func(j, k int) bool { return chks[i][j].MinTime < chks[i][j].MinTime })
+				sort.Slice(chks[i], func(j, k int) bool { return chks[i][j].MinTime < chks[i][k].MinTime })
 			}
 		}
 
@@ -918,6 +920,7 @@ func newCompactionSeriesSet(i IndexReader, c ChunkReader, t TombstoneReader, p i
 	}
 }
 
+// Next advances the series set to the next series.
 func (c *compactionSeriesSet) Next() bool {
 	if !c.p.Next() {
 		return false
@@ -982,6 +985,7 @@ func (c *compactionSeriesSet) Next() bool {
 	return true
 }
 
+// Err returns the last error encountered.
 func (c *compactionSeriesSet) Err() error {
 	if c.err != nil {
 		return c.err
@@ -989,6 +993,7 @@ func (c *compactionSeriesSet) Err() error {
 	return c.p.Err()
 }
 
+// At returns the current series labels, chunk metas, and tombstone intervals.
 func (c *compactionSeriesSet) At() ([]labels.Labels, [][]chunkenc.Meta, Intervals) {
 	return c.l, c.c, c.intervals
 }
@@ -1001,14 +1006,17 @@ func newGroupChunkSeriesSets(sets []GroupChunkSeriesSet) *GroupChunkSeriesSets {
 	return &GroupChunkSeriesSets{sets: sets}
 }
 
+// PushBack appends a GroupChunkSeriesSet to the sets.
 func (s *GroupChunkSeriesSets) PushBack(set GroupChunkSeriesSet) {
 	s.sets = append(s.sets, set)
 }
 
+// Clear removes all sets from the collection.
 func (s *GroupChunkSeriesSets) Clear() {
 	s.sets = s.sets[:0]
 }
 
+// Next advances all sets and removes those that are exhausted.
 func (s *GroupChunkSeriesSets) Next() {
 	temp := []GroupChunkSeriesSet{}
 	for _, set := range s.sets {
@@ -1121,16 +1129,18 @@ func (c *compactionMerger) nextHelper() bool {
 	// Sort the group chunks of each series by min_time.
 	// TODO(Alec), more efficient.
 	for i := 0; i < len(c.c); i++ {
-		sort.Slice(c.c[i], func(j, k int) bool { return c.c[i][j].MinTime < c.c[i][j].MinTime })
+		sort.Slice(c.c[i], func(j, k int) bool { return c.c[i][j].MinTime < c.c[i][k].MinTime })
 	}
 
 	return true
 }
 
+// Next advances the merger to the next series.
 func (c *compactionMerger) Next() bool {
 	return c.nextHelper()
 }
 
+// Err returns the first error encountered in any of the sets.
 func (c *compactionMerger) Err() error {
 	for _, s := range c.sets.sets {
 		if s.Err() != nil {
@@ -1140,6 +1150,7 @@ func (c *compactionMerger) Err() error {
 	return nil
 }
 
+// At returns the current series labels, chunk metas, and tombstone intervals.
 func (c *compactionMerger) At() ([]labels.Labels, [][]chunkenc.Meta, Intervals) {
 	return c.l, c.c, c.intervals
 }

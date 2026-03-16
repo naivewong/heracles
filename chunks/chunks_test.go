@@ -413,7 +413,7 @@ func TestNextSequenceFile(t *testing.T) {
 	// Create files with gaps
 	testutil.Ok(t, ioutil.WriteFile(filepath.Join(tmpdir, "000005"), []byte("data"), 0644))
 
-	path, seq, err = nextSequenceFile(tmpdir)
+	_, seq, err = nextSequenceFile(tmpdir)
 	testutil.Ok(t, err)
 	testutil.Equals(t, 6, seq)
 }

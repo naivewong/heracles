@@ -62,7 +62,7 @@ func NewGroupDiskChunk1FromBs(b *bstream) *GroupDiskChunk1 {
 		return nil
 	}
 	numTimestamp := int(x)
-	x, n, err = b.ReadUvarintAt(n << 3)
+	x, _, err = b.ReadUvarintAt(n << 3)
 	if err != nil {
 		return nil
 	}

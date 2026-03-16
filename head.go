@@ -1222,6 +1222,7 @@ func (h *Head) compactable() bool {
 	return h.MaxTime()-h.MinTime() > h.chunkRange/2*3
 }
 
+// Size returns the total size of all group chunks in the head in bytes.
 func (h *Head) Size() int {
 	h.series.gLock.RLock()
 	defer h.series.gLock.RUnlock()
@@ -1232,12 +1233,14 @@ func (h *Head) Size() int {
 	return total
 }
 
+// NumGroups returns the number of groups in the head.
 func (h *Head) NumGroups() int {
 	h.series.gLock.RLock()
 	defer h.series.gLock.RUnlock()
 	return len(h.series.groups)
 }
 
+// NumSamples returns the total number of samples in the head.
 func (h *Head) NumSamples() int {
 	h.series.gLock.RLock()
 	defer h.series.gLock.RUnlock()

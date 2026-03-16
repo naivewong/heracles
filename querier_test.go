@@ -1098,7 +1098,7 @@ func TestChunkSeriesIterator_NextWithMinTime(t *testing.T) {
 }
 
 func TestPopulatedCSReturnsValidChunkSlice(t *testing.T) {
-	lbls := []labels.Labels{labels.New(labels.Label{"a", "b"})}
+	lbls := []labels.Labels{labels.New(labels.Label{Name: "a", Value: "b"})}
 	chunkMetas := [][]chunkenc.Meta{
 		{
 			{MinTime: 1, MaxTime: 2, Ref: 1},

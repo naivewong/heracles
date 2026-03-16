@@ -189,8 +189,10 @@ func (r *LiveReader) buildRecord() (bool, error) {
 
 		rt := recTypeFromHeader(r.hdr[0])
 		if rt == recFirst || rt == recFull {
-			r.rec = r.rec[:0]
-			r.snappyBuf = r.snappyBuf[:0]
+			// Use make to ensure r.rec is an empty slice ([]byte{}) not nil,
+			// which matches the behavior of Reader and fixes the test for empty records.
+			r.rec = make([]byte, 0)
+			r.snappyBuf = make([]byte, 0)
 		}
 
 		compressed := r.hdr[0]&snappyMask != 0

@@ -17,7 +17,6 @@ import (
 	"context"
 	"encoding/binary"
 	"errors"
-	"io/ioutil"
 	"math/rand"
 	"os"
 	"path/filepath"
@@ -36,7 +35,7 @@ import (
 // to 2. We had a migration in place resetting it to 1 but we should move immediately to
 // version 3 next time to avoid confusion and issues.
 func TestBlockMetaMustNeverBeVersion2(t *testing.T) {
-	dir, err := ioutil.TempDir("", "metaversion")
+	dir, err := os.MkdirTemp("", "metaversion")
 	testutil.Ok(t, err)
 	defer func() {
 		testutil.Ok(t, os.RemoveAll(dir))
@@ -51,7 +50,7 @@ func TestBlockMetaMustNeverBeVersion2(t *testing.T) {
 }
 
 func TestSetCompactionFailed(t *testing.T) {
-	tmpdir, err := ioutil.TempDir("", "test")
+	tmpdir, err := os.MkdirTemp("", "test")
 	testutil.Ok(t, err)
 	defer func() {
 		testutil.Ok(t, os.RemoveAll(tmpdir))
@@ -73,7 +72,7 @@ func TestSetCompactionFailed(t *testing.T) {
 }
 
 func TestCreateBlock(t *testing.T) {
-	tmpdir, err := ioutil.TempDir("", "test")
+	tmpdir, err := os.MkdirTemp("", "test")
 	testutil.Ok(t, err)
 	defer func() {
 		testutil.Ok(t, os.RemoveAll(tmpdir))
@@ -129,7 +128,7 @@ func TestCorruptedChunk(t *testing.T) {
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
-			tmpdir, err := ioutil.TempDir("", "test_open_block_chunk_corrupted")
+			tmpdir, err := os.MkdirTemp("", "test_open_block_chunk_corrupted")
 			testutil.Ok(t, err)
 			defer func() {
 				testutil.Ok(t, os.RemoveAll(tmpdir))
@@ -156,7 +155,7 @@ func TestCorruptedChunk(t *testing.T) {
 
 // TestBlockSize ensures that the block size is calculated correctly.
 func TestBlockSize(t *testing.T) {
-	tmpdir, err := ioutil.TempDir("", "test_blockSize")
+	tmpdir, err := os.MkdirTemp("", "test_blockSize")
 	testutil.Ok(t, err)
 	defer func() {
 		testutil.Ok(t, os.RemoveAll(tmpdir))
@@ -209,7 +208,7 @@ func TestBlockSize(t *testing.T) {
 }
 
 func TestBlockAll(t *testing.T) {
-	tmpdir, err := ioutil.TempDir("", "test")
+	tmpdir, err := os.MkdirTemp("", "test")
 	testutil.Ok(t, err)
 	defer func() {
 		testutil.Ok(t, os.RemoveAll(tmpdir))
@@ -488,7 +487,7 @@ func populateSeries(lbls []map[string]string, mint, maxt int64) []Series {
 
 // TestBlockAccessors tests the simple accessor methods of Block
 func TestBlockAccessors(t *testing.T) {
-	tmpdir, err := ioutil.TempDir("", "test_block_accessors")
+	tmpdir, err := os.MkdirTemp("", "test_block_accessors")
 	testutil.Ok(t, err)
 	defer func() {
 		testutil.Ok(t, os.RemoveAll(tmpdir))
@@ -527,7 +526,7 @@ func TestBlockAccessors(t *testing.T) {
 
 // TestOverlapsClosedInterval tests the OverlapsClosedInterval method
 func TestOverlapsClosedInterval(t *testing.T) {
-	tmpdir, err := ioutil.TempDir("", "test_overlaps")
+	tmpdir, err := os.MkdirTemp("", "test_overlaps")
 	testutil.Ok(t, err)
 	defer func() {
 		testutil.Ok(t, os.RemoveAll(tmpdir))

@@ -18,7 +18,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"math"
 	"math/rand"
 	"os"
@@ -47,7 +46,7 @@ var timeDelta = int64(15000)
 var numNEData int
 
 func init() {
-	files, err := ioutil.ReadDir("../../testdata/bigdata/node_exporter/")
+	files, err := os.ReadDir("../../testdata/bigdata/node_exporter/")
 	if err != nil {
 		fmt.Println("Error list folder ../../testdata/bigdata/node_exporter/")
 		os.Exit(1)
@@ -488,7 +487,7 @@ type writeBenchmark struct {
 
 func (b *writeBenchmark) run() {
 	if b.outPath == "" {
-		dir, err := ioutil.TempDir("", "tsdb_bench")
+		dir, err := os.MkdirTemp("", "tsdb_bench")
 		if err != nil {
 			exitWithError(err)
 		}
@@ -1122,7 +1121,7 @@ type originWriteBenchmark struct {
 
 func (b *originWriteBenchmark) run() {
 	if b.outPath == "" {
-		dir, err := ioutil.TempDir("", "tsdb_origin_bench")
+		dir, err := os.MkdirTemp("", "tsdb_origin_bench")
 		if err != nil {
 			exitWithError(err)
 		}

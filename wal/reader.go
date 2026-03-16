@@ -62,8 +62,10 @@ func (r *Reader) next() (err error) {
 	hdr := r.buf[:recordHeaderSize]
 	buf := r.buf[recordHeaderSize:]
 
-	r.rec = r.rec[:0]
-	r.snappyBuf = r.snappyBuf[:0]
+	// Use make to ensure r.rec and r.snappyBuf are empty slices ([]byte{}) not nil,
+	// which fixes the test for empty records.
+	r.rec = make([]byte, 0)
+	r.snappyBuf = make([]byte, 0)
 
 	i := 0
 	for {

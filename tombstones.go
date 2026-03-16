@@ -17,7 +17,6 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"sync"
@@ -134,7 +133,7 @@ type Stone struct {
 }
 
 func readTombstones(dir string) (TombstoneReader, int64, error) {
-	b, err := ioutil.ReadFile(filepath.Join(dir, tombstoneFilename))
+	b, err := os.ReadFile(filepath.Join(dir, tombstoneFilename))
 	if os.IsNotExist(err) {
 		return newMemTombstones(), 0, nil
 	} else if err != nil {
@@ -193,12 +192,14 @@ func newMemTombstones() *memTombstones {
 	return &memTombstones{intvlGroups: make(map[uint64]Intervals)}
 }
 
+// Get returns the tombstone intervals for the given reference.
 func (t *memTombstones) Get(ref uint64) (Intervals, error) {
 	t.mtx.RLock()
 	defer t.mtx.RUnlock()
 	return t.intvlGroups[ref], nil
 }
 
+// Iter iterates over all tombstones and calls the provided function.
 func (t *memTombstones) Iter(f func(uint64, Intervals) error) error {
 	t.mtx.RLock()
 	defer t.mtx.RUnlock()
@@ -210,6 +211,7 @@ func (t *memTombstones) Iter(f func(uint64, Intervals) error) error {
 	return nil
 }
 
+// Total returns the total number of tombstone intervals.
 func (t *memTombstones) Total() uint64 {
 	t.mtx.RLock()
 	defer t.mtx.RUnlock()
@@ -230,6 +232,7 @@ func (t *memTombstones) addInterval(ref uint64, itvs ...Interval) {
 	}
 }
 
+// Close releases the resources of the tombstone reader.
 func (*memTombstones) Close() error {
 	return nil
 }

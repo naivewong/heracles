@@ -16,7 +16,6 @@ package tsdb
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -30,7 +29,7 @@ import (
 )
 
 func TestLastCheckpoint(t *testing.T) {
-	dir, err := ioutil.TempDir("", "test_checkpoint")
+	dir, err := os.MkdirTemp("", "test_checkpoint")
 	testutil.Ok(t, err)
 	defer func() {
 		testutil.Ok(t, os.RemoveAll(dir))
@@ -65,7 +64,7 @@ func TestLastCheckpoint(t *testing.T) {
 }
 
 func TestDeleteCheckpoints(t *testing.T) {
-	dir, err := ioutil.TempDir("", "test_checkpoint")
+	dir, err := os.MkdirTemp("", "test_checkpoint")
 	testutil.Ok(t, err)
 	defer func() {
 		testutil.Ok(t, os.RemoveAll(dir))
@@ -88,7 +87,7 @@ func TestDeleteCheckpoints(t *testing.T) {
 func TestCheckpoint(t *testing.T) {
 	for _, compress := range []bool{false, true} {
 		t.Run(fmt.Sprintf("compress=%t", compress), func(t *testing.T) {
-			dir, err := ioutil.TempDir("", "test_checkpoint")
+			dir, err := os.MkdirTemp("", "test_checkpoint")
 			testutil.Ok(t, err)
 			defer func() {
 				testutil.Ok(t, os.RemoveAll(dir))
@@ -196,7 +195,7 @@ func TestCheckpoint(t *testing.T) {
 
 func TestCheckpointNoTmpFolderAfterError(t *testing.T) {
 	// Create a new wal with an invalid records.
-	dir, err := ioutil.TempDir("", "test_checkpoint")
+	dir, err := os.MkdirTemp("", "test_checkpoint")
 	testutil.Ok(t, err)
 	defer func() {
 		testutil.Ok(t, os.RemoveAll(dir))

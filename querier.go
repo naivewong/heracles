@@ -61,6 +61,7 @@ type querier struct {
 	blocks []Querier
 }
 
+// LabelValues returns all possible label values for a given label name.
 func (q *querier) LabelValues(n string) ([]string, error) {
 	return q.lvals(q.blocks, n)
 }
@@ -106,10 +107,12 @@ func (q *querier) lvals(qs []Querier, n string) ([]string, error) {
 	return mergeStrings(s1, s2), nil
 }
 
+// LabelValuesFor is not implemented for querier.
 func (q *querier) LabelValuesFor(string, labels.Label) ([]string, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 
+// Select returns a set of series that match the given matchers.
 func (q *querier) Select(ms ...labels.Matcher) (SeriesSet, error) {
 	return q.sel(q.blocks, ms)
 }
@@ -134,6 +137,7 @@ func (q *querier) sel(qs []Querier, ms []labels.Matcher) (SeriesSet, error) {
 	return newMergedSeriesSet(a, b), nil
 }
 
+// Close releases the resources of the querier.
 func (q *querier) Close() error {
 	var merr tsdb_errors.MultiError
 
@@ -210,6 +214,7 @@ type blockQuerier struct {
 	mint, maxt int64
 }
 
+// Select returns a set of series that match the given matchers.
 func (q *blockQuerier) Select(ms ...labels.Matcher) (SeriesSet, error) {
 	base, err := LookupChunkSeries(q.index, q.tombstones, ms...)
 	if err != nil {
@@ -228,6 +233,7 @@ func (q *blockQuerier) Select(ms ...labels.Matcher) (SeriesSet, error) {
 	}, nil
 }
 
+// LabelValues returns all possible label values for a given label name.
 func (q *blockQuerier) LabelValues(name string) ([]string, error) {
 	tpls, err := q.index.LabelValues(name)
 	if err != nil {
@@ -245,14 +251,17 @@ func (q *blockQuerier) LabelValues(name string) ([]string, error) {
 	return res, nil
 }
 
+// LabelNames returns all the unique label names in the block.
 func (q *blockQuerier) LabelNames() ([]string, error) {
 	return q.index.LabelNames()
 }
 
+// LabelValuesFor is not implemented for blockQuerier.
 func (q *blockQuerier) LabelValuesFor(string, labels.Label) ([]string, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 
+// Close releases the resources of the block querier.
 func (q *blockQuerier) Close() error {
 	if q.closed {
 		return errors.New("block querier already closed")

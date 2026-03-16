@@ -16,7 +16,6 @@ package tsdb
 import (
 	"context"
 // 	"fmt"
-	"io/ioutil"
 // 	"math"
 	"os"
 // 	"path"
@@ -36,7 +35,7 @@ import (
 )
 
 func TestMergeOverlappingGroupChunks(t *testing.T) {
-	tmpdir, err := ioutil.TempDir("", "test")
+	tmpdir, err := os.MkdirTemp("", "test")
 	testutil.Ok(t, err)
 	defer func() {
 		testutil.Ok(t, os.RemoveAll(tmpdir))
@@ -90,9 +89,9 @@ func TestMergeOverlappingGroupChunks(t *testing.T) {
 	testutil.Equals(t, true, cm.Next())
 	lsets, chks, _ := cm.At() // The chunks here are not fully deleted.
 	testutil.Equals(t, []labels.Labels{
-		{{"labelName", "0"}, {"labelName1", "labelValue1"}},
-		{{"labelName", "1"}, {"labelName1", "labelValue1"}},
-		{{"labelName", "2"}, {"labelName1", "labelValue1"}},
+		{{Name: "labelName", Value: "0"}, {Name: "labelName1", Value: "labelValue1"}},
+		{{Name: "labelName", Value: "1"}, {Name: "labelName1", Value: "labelValue1"}},
+		{{Name: "labelName", Value: "2"}, {Name: "labelName1", Value: "labelValue1"}},
 	}, lsets)
 	testutil.Equals(t, 3, len(chks))
 	testutil.Equals(t, 3, len(chks[0]))
@@ -124,7 +123,7 @@ func TestMergeOverlappingGroupChunks(t *testing.T) {
 }
 
 func TestCompactAll(t *testing.T) {
-	tmpdir, err := ioutil.TempDir("", "test")
+	tmpdir, err := os.MkdirTemp("", "test")
 	testutil.Ok(t, err)
 	defer func() {
 		testutil.Ok(t, testutil.RemoveAll(tmpdir))
@@ -157,6 +156,7 @@ func TestCompactAll(t *testing.T) {
 		
 		// LabelNames.
 		lnames, err := bq.LabelNames()
+		testutil.Ok(t, err)
 		testutil.Equals(t, []string{"labelName", "labelName1"}, lnames)
 
 		// LabelValues.
@@ -179,7 +179,7 @@ func TestCompactAll(t *testing.T) {
 			s := ss.At()
 			
 			// Labels.
-			testutil.Equals(t, labels.Labels{{"labelName", strconv.Itoa(numSeries)}, {"labelName1", "labelValue1"}}, s.Labels())
+			testutil.Equals(t, labels.Labels{{Name: "labelName", Value: strconv.Itoa(numSeries)}, {Name: "labelName1", Value: "labelValue1"}}, s.Labels())
 			
 			// Iterator.
 			it := s.Iterator()
@@ -224,7 +224,7 @@ func TestCompactAll(t *testing.T) {
 				s := ss.At()
 				
 				// Labels.
-				testutil.Equals(t, labels.Labels{{"labelName", strconv.Itoa(numSeries)}, {"labelName1", "labelValue1"}}, s.Labels())
+				testutil.Equals(t, labels.Labels{{Name: "labelName", Value: strconv.Itoa(numSeries)}, {Name: "labelName1", Value: "labelValue1"}}, s.Labels())
 				
 				// Iterator.
 				it := s.Iterator()
@@ -256,7 +256,7 @@ func TestCompactAll(t *testing.T) {
 				s := ss.At()
 				
 				// Labels.
-				testutil.Equals(t, labels.Labels{{"labelName", strconv.Itoa(numSeries+3)}, {"labelName1", "labelValue1"}}, s.Labels())
+				testutil.Equals(t, labels.Labels{{Name: "labelName", Value: strconv.Itoa(numSeries+3)}, {Name: "labelName1", Value: "labelValue1"}}, s.Labels())
 				
 				// Iterator.
 				it := s.Iterator()
@@ -285,7 +285,7 @@ func TestCompactAll(t *testing.T) {
 				s := ss.At()
 				
 				// Labels.
-				testutil.Equals(t, labels.Labels{{"labelName", strconv.Itoa(numSeries+6)}, {"labelName1", "labelValue1"}}, s.Labels())
+				testutil.Equals(t, labels.Labels{{Name: "labelName", Value: strconv.Itoa(numSeries+6)}, {Name: "labelName1", Value: "labelValue1"}}, s.Labels())
 				
 				// Iterator.
 				it := s.Iterator()
@@ -354,6 +354,7 @@ func TestCompactAll(t *testing.T) {
 		
 		// LabelNames.
 		lnames, err := bq.LabelNames()
+		testutil.Ok(t, err)
 		testutil.Equals(t, []string{"labelName", "labelName1"}, lnames)
 
 		// LabelValues.
@@ -376,7 +377,7 @@ func TestCompactAll(t *testing.T) {
 			s := ss.At()
 			
 			// Labels.
-			testutil.Equals(t, labels.Labels{{"labelName", strconv.Itoa(numSeries)}, {"labelName1", "labelValue1"}}, s.Labels())
+			testutil.Equals(t, labels.Labels{{Name: "labelName", Value: strconv.Itoa(numSeries)}, {Name: "labelName1", Value: "labelValue1"}}, s.Labels())
 			
 			// Iterator.
 			it := s.Iterator()
@@ -802,7 +803,7 @@ func TestCompactAll(t *testing.T) {
 // 	}, nil)
 // 	testutil.Ok(t, err)
 
-// 	tmpdir, err := ioutil.TempDir("", "test")
+// 	tmpdir, err := os.MkdirTemp("", "test")
 // 	testutil.Ok(t, err)
 // 	defer func() {
 // 		testutil.Ok(t, os.RemoveAll(tmpdir))
@@ -1201,7 +1202,7 @@ func TestCompactAll(t *testing.T) {
 // 	for _, c := range cases {
 // 		nBlocks := len(c.ranges)
 // 		b.Run(fmt.Sprintf("type=%s,blocks=%d,series=%d,samplesPerSeriesPerBlock=%d", c.compactionType, nBlocks, nSeries, c.ranges[0][1]-c.ranges[0][0]+1), func(b *testing.B) {
-// 			dir, err := ioutil.TempDir("", "bench_compaction")
+// 			dir, err := os.MkdirTemp("", "bench_compaction")
 // 			testutil.Ok(b, err)
 // 			defer func() {
 // 				testutil.Ok(b, os.RemoveAll(dir))
@@ -1288,7 +1289,7 @@ func TestCompactAll(t *testing.T) {
 // // TestCancelCompactions ensures that when the db is closed
 // // any running compaction is cancelled to unblock closing the db.
 // func TestCancelCompactions(t *testing.T) {
-// 	tmpdir, err := ioutil.TempDir("", "testCancelCompaction")
+// 	tmpdir, err := os.MkdirTemp("", "testCancelCompaction")
 // 	testutil.Ok(t, err)
 // 	defer func() {
 // 		testutil.Ok(t, os.RemoveAll(tmpdir))

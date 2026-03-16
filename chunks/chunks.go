@@ -20,7 +20,6 @@ import (
 	"hash"
 	"hash/crc32"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -294,6 +293,7 @@ func MergeChunks(a, b chunkenc.Chunk) (*chunkenc.XORChunk, error) {
 // ├───────────────────────────────────────────────────────────────────────────────────┤
 // │                               CRC32 <4 bytes>                                     │
 // └───────────────────────────────────────────────────────────────────────────────────┘
+// WriteChunks writes the provided chunks to the chunk file.
 func (w *Writer) WriteChunks(chks ...chunkenc.Meta) error {
 	if len(chks) == 0 {
 		return nil
@@ -464,6 +464,7 @@ func (w *Writer) seq() int {
 	return w.seqs[len(w.seqs) - 1] - 1
 }
 
+// Close flushes any pending data and closes the writer.
 func (w *Writer) Close() error {
 	if err := w.finalizeTail(); err != nil {
 		return err
@@ -481,14 +482,17 @@ type ByteSlice interface {
 
 type realByteSlice []byte
 
+// Len returns the length of the byte slice.
 func (b realByteSlice) Len() int {
 	return len(b)
 }
 
+// Range returns a subslice of the byte slice.
 func (b realByteSlice) Range(start, end int) []byte {
 	return b[start:end]
 }
 
+// Sub returns a subslice of the byte slice as a ByteSlice.
 func (b realByteSlice) Sub(start, end int) ByteSlice {
 	return b[start:end]
 }
@@ -561,16 +565,17 @@ func NewDirReader(dir string, pool chunkenc.Pool) (*Reader, error) {
 	return reader, nil
 }
 
+// Close releases the resources of the reader.
 func (s *Reader) Close() error {
 	return closeAll(s.cs)
 }
 
-// Size returns the size of the chunks.
+// Size returns the total size of all chunk files.
 func (s *Reader) Size() int64 {
 	return s.size
 }
 
-// Chunk returns a chunk from a given reference.
+// Chunk returns the chunk referenced by the given reference.
 func (s *Reader) Chunk(ref uint64) (chunkenc.Chunk, error) {
 	var (
 		sgmSeq    = int(ref >> 32)
@@ -615,7 +620,7 @@ func nextSequenceFile(dir string) (string, int, error) {
 }
 
 func sequenceFiles(dir string) ([]string, error) {
-	files, err := ioutil.ReadDir(dir)
+	files, err := os.ReadDir(dir)
 	if err != nil {
 		return nil, err
 	}

@@ -14,7 +14,6 @@
 package testutil
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 )
@@ -116,7 +115,7 @@ func NewTemporaryDirectory(name string, t T) (handler TemporaryDirectory) {
 		err       error
 	)
 
-	directory, err = ioutil.TempDir(defaultDirectory, name)
+	directory, err = os.MkdirTemp(defaultDirectory, name)
 	if err != nil {
 		t.Fatal(err)
 	}

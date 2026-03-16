@@ -89,11 +89,11 @@ func TestGetNthByMaxHeapInt64WithLargeNumbers(t *testing.T) {
 }
 
 func TestGetNthByMaxHeapInt64RandomData(t *testing.T) {
-	rand.Seed(42)
+	r := rand.New(rand.NewSource(42))
 	size := 1000
 	data := make([]int64, size)
 	for i := 0; i < size; i++ {
-		data[i] = rand.Int63n(1000000)
+		data[i] = r.Int63n(1000000)
 	}
 
 	// Test multiple k values
@@ -175,11 +175,11 @@ func TestGetNthByMinHeapInt64WithLargeNumbers(t *testing.T) {
 }
 
 func TestGetNthByMinHeapInt64RandomData(t *testing.T) {
-	rand.Seed(42)
+	r := rand.New(rand.NewSource(42))
 	size := 1000
 	data := make([]int64, size)
 	for i := 0; i < size; i++ {
-		data[i] = rand.Int63n(1000000)
+		data[i] = r.Int63n(1000000)
 	}
 
 	// Test multiple k values
@@ -365,13 +365,13 @@ func TestMedianHeapReset(t *testing.T) {
 }
 
 func TestMedianHeapLarge(t *testing.T) {
-	rand.Seed(42)
+	r := rand.New(rand.NewSource(42))
 	size := 999
 	h := NewMedianHeap(size)
 
 	data := make([]float64, size)
 	for i := 0; i < size; i++ {
-		data[i] = float64(rand.Intn(1000000))
+		data[i] = float64(r.Intn(1000000))
 		h.Add(data[i])
 	}
 
@@ -389,10 +389,10 @@ func TestMedianHeapLarge(t *testing.T) {
 // ============== Benchmarks ==============
 
 func BenchmarkGetNthByMaxHeapInt64(b *testing.B) {
-	rand.Seed(42)
+	r := rand.New(rand.NewSource(42))
 	arr := make([]int64, 100000)
 	for i := 0; i < len(arr); i++ {
-		arr[i] = rand.Int63n(100000)
+		arr[i] = r.Int63n(100000)
 	}
 
 	b.ResetTimer()
@@ -403,10 +403,10 @@ func BenchmarkGetNthByMaxHeapInt64(b *testing.B) {
 }
 
 func BenchmarkGetNthByMinHeapInt64(b *testing.B) {
-	rand.Seed(42)
+	r := rand.New(rand.NewSource(42))
 	arr := make([]int64, 100000)
 	for i := 0; i < len(arr); i++ {
-		arr[i] = rand.Int63n(100000)
+		arr[i] = r.Int63n(100000)
 	}
 
 	b.ResetTimer()
@@ -417,10 +417,10 @@ func BenchmarkGetNthByMinHeapInt64(b *testing.B) {
 }
 
 func BenchmarkGetNthByMaxHeapFloat64(b *testing.B) {
-	rand.Seed(42)
+	r := rand.New(rand.NewSource(42))
 	arr := make([]float64, 100000)
 	for i := 0; i < len(arr); i++ {
-		arr[i] = rand.Float64() * 100000
+		arr[i] = r.Float64() * 100000
 	}
 
 	b.ResetTimer()
@@ -431,10 +431,10 @@ func BenchmarkGetNthByMaxHeapFloat64(b *testing.B) {
 }
 
 func BenchmarkGetNthByMinHeapFloat64(b *testing.B) {
-	rand.Seed(42)
+	r := rand.New(rand.NewSource(42))
 	arr := make([]float64, 100000)
 	for i := 0; i < len(arr); i++ {
-		arr[i] = rand.Float64() * 100000
+		arr[i] = r.Float64() * 100000
 	}
 
 	b.ResetTimer()
@@ -445,13 +445,13 @@ func BenchmarkGetNthByMinHeapFloat64(b *testing.B) {
 }
 
 func BenchmarkMedianHeapAdd(b *testing.B) {
-	rand.Seed(42)
+	r := rand.New(rand.NewSource(42))
 	h := NewMedianHeap(100000)
 
 	b.ResetTimer()
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
-		h.Add(rand.Float64() * 100000)
+		h.Add(r.Float64() * 100000)
 		if h.Count() == 0 {
 			b.Fatal("heap should not reset during benchmark")
 		}

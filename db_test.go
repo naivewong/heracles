@@ -15,7 +15,6 @@ package tsdb
 
 import (
 	// "fmt"
-	"io/ioutil"
 // 	"math"
 // 	"math/rand"
 	"os"
@@ -54,7 +53,7 @@ func generateGroupData(mint, maxt, step, devMag int64, seriesNum int) ([]int64, 
 }
 
 func openTestDB(t testing.TB, opts *Options) (db *DB, close func()) {
-	tmpdir, err := ioutil.TempDir("", "test")
+	tmpdir, err := os.MkdirTemp("", "test")
 	testutil.Ok(t, testutil.RemoveAll(tmpdir))
 	testutil.Ok(t, err)
 
@@ -735,7 +734,7 @@ func TestGroupDBAll(t *testing.T) {
 // 	testutil.Ok(t, app.Rollback())
 
 // 	// create snapshot
-// 	snap, err := ioutil.TempDir("", "snap")
+// 	snap, err := os.MkdirTemp("", "snap")
 // 	testutil.Ok(t, err)
 
 // 	defer func() {
@@ -804,7 +803,7 @@ func TestGroupDBAll(t *testing.T) {
 // 		}
 
 // 		// create snapshot
-// 		snap, err := ioutil.TempDir("", "snap")
+// 		snap, err := os.MkdirTemp("", "snap")
 // 		testutil.Ok(t, err)
 
 // 		defer func() {
@@ -1126,7 +1125,7 @@ func TestGroupDBAll(t *testing.T) {
 // 		// Delete the ranges.
 
 // 		// create snapshot
-// 		snap, err := ioutil.TempDir("", "snap")
+// 		snap, err := os.MkdirTemp("", "snap")
 // 		testutil.Ok(t, err)
 
 // 		defer func() {
@@ -1640,7 +1639,7 @@ func TestGroupDBAll(t *testing.T) {
 // // 	- with blocks with WAL: same as above
 // func TestInitializeHeadTimestamp(t *testing.T) {
 // 	t.Run("clean", func(t *testing.T) {
-// 		dir, err := ioutil.TempDir("", "test_head_init")
+// 		dir, err := os.MkdirTemp("", "test_head_init")
 // 		testutil.Ok(t, err)
 // 		defer func() {
 // 			testutil.Ok(t, os.RemoveAll(dir))
@@ -1663,7 +1662,7 @@ func TestGroupDBAll(t *testing.T) {
 // 		testutil.Equals(t, int64(1000), db.head.MaxTime())
 // 	})
 // 	t.Run("wal-only", func(t *testing.T) {
-// 		dir, err := ioutil.TempDir("", "test_head_init")
+// 		dir, err := os.MkdirTemp("", "test_head_init")
 // 		testutil.Ok(t, err)
 // 		defer func() {
 // 			testutil.Ok(t, os.RemoveAll(dir))
@@ -1695,7 +1694,7 @@ func TestGroupDBAll(t *testing.T) {
 // 		testutil.Equals(t, int64(15000), db.head.MaxTime())
 // 	})
 // 	t.Run("existing-block", func(t *testing.T) {
-// 		dir, err := ioutil.TempDir("", "test_head_init")
+// 		dir, err := os.MkdirTemp("", "test_head_init")
 // 		testutil.Ok(t, err)
 // 		defer func() {
 // 			testutil.Ok(t, os.RemoveAll(dir))
@@ -1711,7 +1710,7 @@ func TestGroupDBAll(t *testing.T) {
 // 		testutil.Equals(t, int64(2000), db.head.MaxTime())
 // 	})
 // 	t.Run("existing-block-and-wal", func(t *testing.T) {
-// 		dir, err := ioutil.TempDir("", "test_head_init")
+// 		dir, err := os.MkdirTemp("", "test_head_init")
 // 		testutil.Ok(t, err)
 // 		defer func() {
 // 			testutil.Ok(t, os.RemoveAll(dir))
@@ -2313,7 +2312,7 @@ func TestGroupDBAll(t *testing.T) {
 // 	for _, c := range cases {
 // 		if ok := t.Run("", func(t *testing.T) {
 
-// 			tmpdir, err := ioutil.TempDir("", "data")
+// 			tmpdir, err := os.MkdirTemp("", "data")
 // 			testutil.Ok(t, err)
 // 			defer func() {
 // 				testutil.Ok(t, os.RemoveAll(tmpdir))
@@ -2370,7 +2369,7 @@ func TestGroupDBAll(t *testing.T) {
 // func TestBlockRanges(t *testing.T) {
 // 	logger := log.NewLogfmtLogger(log.NewSyncWriter(os.Stderr))
 
-// 	dir, err := ioutil.TempDir("", "test_storage")
+// 	dir, err := os.MkdirTemp("", "test_storage")
 // 	if err != nil {
 // 		t.Fatalf("Opening test dir failed: %s", err)
 // 	}

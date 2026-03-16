@@ -547,3 +547,62 @@ func TestReaderData(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateRecord(t *testing.T) {
+	// Test recFull cases
+	testutil.Ok(t, validateRecord(recFull, 0))
+	testutil.NotOk(t, validateRecord(recFull, 1))
+
+	// Test recFirst cases
+	testutil.Ok(t, validateRecord(recFirst, 0))
+	testutil.NotOk(t, validateRecord(recFirst, 1))
+
+	// Test recMiddle cases
+	testutil.NotOk(t, validateRecord(recMiddle, 0))
+	testutil.Ok(t, validateRecord(recMiddle, 1))
+
+	// Test recLast cases
+	testutil.NotOk(t, validateRecord(recLast, 0))
+	testutil.Ok(t, validateRecord(recLast, 1))
+
+	// Test invalid record type (default case)
+	err := validateRecord(recType(99), 0)
+	testutil.NotOk(t, err)
+	testutil.Assert(t, err.Error() == "unexpected record type 99", "expected error for invalid record type")
+}
+
+func TestLiveReaderOffset(t *testing.T) {
+	// Test that Offset() returns the correct value after reading
+	data := make([]byte, 100)
+	for i := range data {
+		data[i] = byte(i)
+	}
+
+	// Create a simple record
+	var buf []byte
+	buf = append(buf, encodedRecord(recFull, data)...)
+
+	r := NewLiveReader(log.NewNopLogger(), nil, bytes.NewReader(buf))
+	testutil.Assert(t, r.Offset() == 0, "initial offset should be 0")
+
+	testutil.Assert(t, r.Next(), "expected to read record")
+	testutil.Assert(t, r.Offset() > 0, "offset should be positive after reading")
+}
+
+func TestLiveReaderRecordEmpty(t *testing.T) {
+	// Test reading an empty record
+	var buf []byte
+	buf = append(buf, encodedRecord(recFull, []byte{})...)
+
+	r := NewLiveReader(log.NewNopLogger(), nil, bytes.NewReader(buf))
+	testutil.Assert(t, r.Next(), "expected to read record")
+	rec := r.Record()
+	testutil.Assert(t, rec != nil, "record should not be nil")
+	testutil.Equals(t, 0, len(rec))
+}
+
+func TestReaderSegment(t *testing.T) {
+	// Test Segment() method which has 0% coverage
+	r := NewReader(bytes.NewReader([]byte{}))
+	testutil.Equals(t, -1, r.Segment())
+}

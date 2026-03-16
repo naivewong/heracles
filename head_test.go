@@ -15,10 +15,9 @@ package tsdb
 
 import (
 	// "fmt"
-	"io/ioutil"
 	"math"
 	"math/rand"
-	// "os"
+	"os"
 //  	"path"
 //  	"path/filepath"
 	// "reflect"
@@ -125,7 +124,7 @@ import (
 // 					{ref: 0, intervals: []Interval{{Mint: 99, Maxt: 101}}},
 // 				},
 // 			}
-// 			dir, err := ioutil.TempDir("", "test_read_wal")
+// 			dir, err := os.MkdirTemp("", "test_read_wal")
 // 			testutil.Ok(t, err)
 // 			defer func() {
 // 				testutil.Ok(t, os.RemoveAll(dir))
@@ -168,7 +167,7 @@ import (
 // }
 
 // func TestHead_WALMultiRef(t *testing.T) {
-// 	dir, err := ioutil.TempDir("", "test_wal_multi_ref")
+// 	dir, err := os.MkdirTemp("", "test_wal_multi_ref")
 // 	testutil.Ok(t, err)
 // 	defer func() {
 // 		testutil.Ok(t, os.RemoveAll(dir))
@@ -607,7 +606,7 @@ func prepareWAL(numPoints int, dir string) (*wal.WAL, error) {
 }
 
 func TestHeadWithWAL(test *testing.T) {
-	tmpdir, err := ioutil.TempDir("", "head_with_wal")
+	tmpdir, err := os.MkdirTemp("", "head_with_wal")
 	testutil.Ok(test, err)
 	defer func() {
 		testutil.Ok(test, testutil.RemoveAll(tmpdir))
@@ -844,7 +843,7 @@ func TestHeadWithWAL(test *testing.T) {
 // 					{Ref: 50, T: 90, V: 1},
 // 				},
 // 			}
-// 			dir, err := ioutil.TempDir("", "test_delete_series")
+// 			dir, err := os.MkdirTemp("", "test_delete_series")
 // 			testutil.Ok(t, err)
 // 			defer func() {
 // 				testutil.Ok(t, os.RemoveAll(dir))
@@ -906,7 +905,7 @@ func TestHeadWithWAL(test *testing.T) {
 // 		t.Run(fmt.Sprintf("compress=%t", compress), func(t *testing.T) {
 // 		Outer:
 // 			for _, c := range cases {
-// 				dir, err := ioutil.TempDir("", "test_wal_reload")
+// 				dir, err := os.MkdirTemp("", "test_wal_reload")
 // 				testutil.Ok(t, err)
 // 				defer func() {
 // 					testutil.Ok(t, os.RemoveAll(dir))
@@ -1072,7 +1071,7 @@ func TestHeadWithWAL(test *testing.T) {
 // }
 
 // func TestDeletedSamplesAndSeriesStillInWALAfterCheckpoint(t *testing.T) {
-// 	dir, err := ioutil.TempDir("", "test_delete_wal")
+// 	dir, err := os.MkdirTemp("", "test_delete_wal")
 // 	testutil.Ok(t, err)
 // 	defer func() {
 // 		testutil.Ok(t, os.RemoveAll(dir))
@@ -1172,7 +1171,7 @@ func TestHeadWithWAL(test *testing.T) {
 // 	for _, l := range lbls {
 // 		seriesMap[labels.New(l...).String()] = []tsdbutil.Sample{}
 // 	}
-// 	dir, _ := ioutil.TempDir("", "test")
+// 	dir, _ := os.MkdirTemp("", "test")
 // 	defer func() {
 // 		testutil.Ok(t, os.RemoveAll(dir))
 // 	}()
@@ -1539,7 +1538,7 @@ func TestHeadWithWAL(test *testing.T) {
 // func TestHead_LogRollback(t *testing.T) {
 // 	for _, compress := range []bool{false, true} {
 // 		t.Run(fmt.Sprintf("compress=%t", compress), func(t *testing.T) {
-// 			dir, err := ioutil.TempDir("", "wal_rollback")
+// 			dir, err := os.MkdirTemp("", "wal_rollback")
 // 			testutil.Ok(t, err)
 // 			defer func() {
 // 				testutil.Ok(t, os.RemoveAll(dir))
@@ -1616,7 +1615,7 @@ func TestHeadWithWAL(test *testing.T) {
 // 	} {
 // 		for _, compress := range []bool{false, true} {
 // 			t.Run(fmt.Sprintf("%s,compress=%t", name, compress), func(t *testing.T) {
-// 				dir, err := ioutil.TempDir("", "wal_repair")
+// 				dir, err := os.MkdirTemp("", "wal_repair")
 // 				testutil.Ok(t, err)
 // 				defer func() {
 // 					testutil.Ok(t, os.RemoveAll(dir))
@@ -1677,7 +1676,7 @@ func TestHeadWithWAL(test *testing.T) {
 // }
 
 // func TestNewWalSegmentOnTruncate(t *testing.T) {
-// 	dir, err := ioutil.TempDir("", "test_wal_segemnts")
+// 	dir, err := os.MkdirTemp("", "test_wal_segemnts")
 // 	testutil.Ok(t, err)
 // 	defer func() {
 // 		testutil.Ok(t, os.RemoveAll(dir))

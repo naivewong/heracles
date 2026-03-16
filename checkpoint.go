@@ -17,7 +17,6 @@ package tsdb
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"math"
 	"os"
 	"path/filepath"
@@ -43,7 +42,7 @@ type CheckpointStats struct {
 // LastCheckpoint returns the directory name and index of the most recent checkpoint.
 // If dir does not contain any checkpoints, ErrNotFound is returned.
 func LastCheckpoint(dir string) (string, int, error) {
-	files, err := ioutil.ReadDir(dir)
+	files, err := os.ReadDir(dir)
 	if err != nil {
 		return "", 0, err
 	}
@@ -70,7 +69,7 @@ func LastCheckpoint(dir string) (string, int, error) {
 func DeleteCheckpoints(dir string, maxIndex int) error {
 	var errs tsdb_errors.MultiError
 
-	files, err := ioutil.ReadDir(dir)
+	files, err := os.ReadDir(dir)
 	if err != nil {
 		return err
 	}

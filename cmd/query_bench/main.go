@@ -32,7 +32,9 @@ func LoadDevOpsSeries(lsets *[]origin_labels.Labels, queryLabels *[]origin_label
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() && len(*lsets) < numSeries {
 		m := make(map[string]string)
-		err = json.Unmarshal([]byte(scanner.Text()), &m)
+		if err := json.Unmarshal([]byte(scanner.Text()), &m); err != nil {
+			continue
+		}
 		lset := origin_labels.FromMap(m)
 		sort.Sort(lset)
 		*lsets = append(*lsets, lset)
@@ -59,7 +61,9 @@ func GroupLoadDevOpsSeries(lsets *[]labels.Labels, queryLabels *[]labels.Label, 
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() && len(*lsets) < numSeries {
 		m := make(map[string]string)
-		err = json.Unmarshal([]byte(scanner.Text()), &m)
+		if err := json.Unmarshal([]byte(scanner.Text()), &m); err != nil {
+			continue
+		}
 		lset := labels.FromMap(m)
 		sort.Sort(lset)
 		*lsets = append(*lsets, lset)

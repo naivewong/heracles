@@ -171,3 +171,97 @@ func (it *listSeriesIterator) Seek(t int64) bool {
 func (it *listSeriesIterator) Err() error {
 	return nil
 }
+
+func TestBufferedSeriesIteratorPeekBack(t *testing.T) {
+	it := NewBuffer(newListSeriesIterator([]sample{
+		{t: 1, v: 2},
+		{t: 2, v: 3},
+		{t: 3, v: 4},
+	}), 2)
+
+	// Initially, no buffered data, PeekBack should return false
+	_, _, ok := it.PeekBack()
+	testutil.Assert(t, !ok, "PeekBack should return false when buffer is empty")
+
+	// Need to Seek first to initialize the iterator
+	testutil.Assert(t, it.Seek(0), "seek failed")
+
+	// After Seek, PeekBack should still return false as no Next() called yet
+	_, _, ok = it.PeekBack()
+	testutil.Assert(t, !ok, "PeekBack should return false before Next")
+}
+
+func TestBufferedSeriesIteratorSeek(t *testing.T) {
+	it := NewBuffer(newListSeriesIterator([]sample{
+		{t: 1, v: 2},
+		{t: 5, v: 6},
+		{t: 10, v: 11},
+		{t: 15, v: 16},
+	}), 3)
+
+	// Seek to a time before the first element
+	testutil.Assert(t, it.Seek(0), "seek to before first should find first")
+	ts, _ := it.At()
+	testutil.Equals(t, int64(1), ts)
+
+	// Seek to exact time
+	testutil.Assert(t, it.Seek(10), "seek to exact time")
+	ts, _ = it.At()
+	testutil.Equals(t, int64(10), ts)
+
+	// Seek to time beyond all data
+	testutil.Assert(t, !it.Seek(100), "seek beyond data should return false")
+}
+
+func TestBufferedSeriesIteratorErr(t *testing.T) {
+	it := NewBuffer(newListSeriesIterator([]sample{
+		{t: 1, v: 2},
+	}), 2)
+
+	testutil.Ok(t, it.Err())
+}
+
+func TestBufferedSeriesIteratorTV(t *testing.T) {
+	it := NewBuffer(newListSeriesIterator([]sample{
+		{t: 1, v: 2.5},
+		{t: 2, v: 3.5},
+	}), 2)
+
+	// Need to Seek first
+	testutil.Assert(t, it.Seek(0), "seek failed")
+
+	testutil.Assert(t, it.Next(), "next failed")
+	ts, v := it.At()
+	testutil.Equals(t, int64(2), ts)
+	testutil.Equals(t, float64(3.5), v)
+}
+
+func TestSampleRingLast(t *testing.T) {
+	r := newSampleRing(2, 10)
+	r.add(1, 1.0)
+	r.add(2, 2.0)
+
+	ts, v, ok := r.last()
+	testutil.Assert(t, ok, "last should return true")
+	testutil.Equals(t, int64(2), ts)
+	testutil.Equals(t, float64(2.0), v)
+}
+
+func TestSampleRingIteratorSeek(t *testing.T) {
+	r := newSampleRing(10, 10)
+	r.add(1, 1.0)
+	r.add(2, 2.0)
+	r.add(3, 3.0)
+
+	it := r.iterator()
+	// The Seek method on sampleRingIterator always returns false
+	testutil.Assert(t, !it.Seek(2), "Seek on sampleRingIterator always returns false")
+}
+
+func TestSampleRingIteratorErr(t *testing.T) {
+	r := newSampleRing(10, 10)
+	r.add(1, 1.0)
+
+	it := r.iterator()
+	testutil.Ok(t, it.Err())
+}

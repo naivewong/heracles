@@ -58,7 +58,9 @@ func LoadDevOpsSeries(t testing.TB, lsets *[]origin_labels.Labels, queryLabels *
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() && len(*lsets) < numSeries {
 		m := make(map[string]string)
-		err = json.Unmarshal([]byte(scanner.Text()), &m)
+		if err := json.Unmarshal([]byte(scanner.Text()), &m); err != nil {
+			continue
+		}
 		lset := origin_labels.FromMap(m)
 		sort.Sort(lset)
 		*lsets = append(*lsets, lset)
@@ -88,7 +90,9 @@ func LoadNodeExporterSeries(t testing.TB, lsets *[]origin_labels.Labels, queryLa
 		count := 0
 		for scanner.Scan() && count < numSeries {
 			m := make(map[string]string)
-			err = json.Unmarshal([]byte(scanner.Text()), &m)
+			if err := json.Unmarshal([]byte(scanner.Text()), &m); err != nil {
+				continue
+			}
 			m["instance"] = fmt.Sprintf("pc9%06d:9100", j)
 			lset := origin_labels.FromMap(m)
 			sort.Sort(lset)
@@ -118,7 +122,9 @@ func GroupLoadDevOpsSeries(t testing.TB, lsets *[]labels.Labels, queryLabels *[]
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() && len(*lsets) < numSeries {
 		m := make(map[string]string)
-		err = json.Unmarshal([]byte(scanner.Text()), &m)
+		if err := json.Unmarshal([]byte(scanner.Text()), &m); err != nil {
+			continue
+		}
 		lset := labels.FromMap(m)
 		sort.Sort(lset)
 		*lsets = append(*lsets, lset)
